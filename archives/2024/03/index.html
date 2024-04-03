@@ -163,7 +163,7 @@
   <div class="post-block">
     <div class="posts-collapse">
       <div class="collection-title">
-        <span class="collection-header">Um..! 2 posts in total. Keep on posting.</span>
+        <span class="collection-header">Um..! 3 posts in total. Keep on posting.</span>
       </div>
 
       
@@ -196,14 +196,14 @@
 
       <div class="post-meta">
         <time itemprop="dateCreated"
-              datetime="2024-03-28T20:20:44+08:00"
-              content="2024-03-28">
-          03-28
+              datetime="2024-03-27T20:30:01+08:00"
+              content="2024-03-27">
+          03-27
         </time>
       </div>
 
       <div class="post-title">
-          <a class="post-title-link" href="/2024/03/28/hello-world/" itemprop="url">
+          <a class="post-title-link" href="/2024/03/27/hello-world/" itemprop="url">
             <span itemprop="name">Hello World</span>
           </a>
       </div>
@@ -283,20 +283,20 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">3</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
             <a href="/categories/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">categories</span></a>
       </div>
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">tags</span></a>
       </div>
   </nav>
@@ -377,6 +377,19 @@
 
 
 
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
 
 
   
