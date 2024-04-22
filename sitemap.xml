@@ -2,9 +2,18 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://tomuli.cc/test.html</loc>
+    <loc>https://tomuli.cc/2024/04/22/maillog/</loc>
     
-    <lastmod>2024-04-04</lastmod>
+    <lastmod>2024-04-22</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tomuli.cc/2024/04/03/note-self-mannered-02/</loc>
+    
+    <lastmod>2024-04-21</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -14,15 +23,6 @@
     <loc>https://tomuli.cc/about/index.html</loc>
     
     <lastmod>2024-04-04</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://tomuli.cc/2024/04/03/note-self-mannered-02/</loc>
-    
-    <lastmod>2024-04-03</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -67,22 +67,29 @@
 
   <url>
     <loc>https://tomuli.cc/</loc>
-    <lastmod>2024-04-21</lastmod>
+    <lastmod>2024-04-22</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   
   <url>
+    <loc>https://tomuli.cc/tags/Mail/</loc>
+    <lastmod>2024-04-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/tags/Interview/</loc>
-    <lastmod>2024-04-21</lastmod>
+    <lastmod>2024-04-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/tags/Reading-notes/</loc>
-    <lastmod>2024-04-21</lastmod>
+    <lastmod>2024-04-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -90,15 +97,22 @@
 
   
   <url>
+    <loc>https://tomuli.cc/categories/Mail/</loc>
+    <lastmod>2024-04-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/categories/Interview/</loc>
-    <lastmod>2024-04-21</lastmod>
+    <lastmod>2024-04-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/categories/Reading-notes/</loc>
-    <lastmod>2024-04-21</lastmod>
+    <lastmod>2024-04-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
