@@ -28,7 +28,7 @@
 <meta property="og:description" content="直到去年公司組織結構調整為止，Mail Server 產品的開發都是我所在 Team 的一大業務，其中我接觸較多的是和 Mail Auditing, Security 相關的功能，今天想先和大家分享前者，也算是幫自己做過的功能留下一些文件和筆記。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-04-22T15:52:13.651Z">
-<meta property="article:modified_time" content="2024-04-22T16:05:38.908Z">
+<meta property="article:modified_time" content="2024-04-23T15:20:54.926Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="Mail">
 <meta name="twitter:card" content="summary">
@@ -196,7 +196,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-04-23 00:05:38" itemprop="dateModified" datetime="2024-04-23T00:05:38+08:00">2024-04-23</time>
+                <time title="Modified: 2024-04-23 23:20:54" itemprop="dateModified" datetime="2024-04-23T23:20:54+08:00">2024-04-23</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -231,7 +231,7 @@
 </blockquote>
 <h2 id="Postfix-Receive-Mail-from-Network"><a href="#Postfix-Receive-Mail-from-Network" class="headerlink" title="Postfix: Receive Mail from Network"></a>Postfix: Receive Mail from Network</h2><p>以下為 Postfix 透過 Network 收到 Mail 的處理流程:</p>
 <pre class="mermaid">graph LR;
-    Network --- smtpd;
+    Network --> smtpd;
     smtpd --> cleanup;
     cleanup -->|"queue"|qmgr;
     qmgr --> local;

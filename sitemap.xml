@@ -13,7 +13,7 @@
   <url>
     <loc>https://tomuli.cc/2024/04/22/maillog/</loc>
     
-    <lastmod>2024-04-22</lastmod>
+    <lastmod>2024-04-23</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -47,7 +47,7 @@
   </url>
   
   <url>
-    <loc>https://tomuli.cc/categories/index.html</loc>
+    <loc>https://tomuli.cc/tags/index.html</loc>
     
     <lastmod>2024-03-28</lastmod>
     
@@ -56,7 +56,7 @@
   </url>
   
   <url>
-    <loc>https://tomuli.cc/tags/index.html</loc>
+    <loc>https://tomuli.cc/categories/index.html</loc>
     
     <lastmod>2024-03-28</lastmod>
     
