@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tomuli.cc","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","width":350,"display":"always","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="之前參加的讀書會選書，當時讀書會進行到後期的時候，參與的大家都對這本書有類似的反饋：書中敘述的內容因為沒有實例佐證所以有些內容較無法想像。那時候我認為等開發經驗多累積一點再回來看這本書應該會有較深的感受，再加上書中前面的內容其實沒有上面提到的問題，個人覺得對初探架構的自己來說是有幫助的，因此打算至少整理一下到 SOLID Principles 前的讀書筆記。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms">
+<meta property="og:url" content="https://tomuli.cc/2024/04/28/note-arch-02/index.html">
+<meta property="og:site_name" content="Tomu&#39;s Blog">
+<meta property="og:description" content="之前參加的讀書會選書，當時讀書會進行到後期的時候，參與的大家都對這本書有類似的反饋：書中敘述的內容因為沒有實例佐證所以有些內容較無法想像。那時候我認為等開發經驗多累積一點再回來看這本書應該會有較深的感受，再加上書中前面的內容其實沒有上面提到的問題，個人覺得對初探架構的自己來說是有幫助的，因此打算至少整理一下到 SOLID Principles 前的讀書筆記。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://tomuli.cc/2024/04/28/note-arch-02/note-arch-02-segregation.png">
+<meta property="article:published_time" content="2024-04-28T14:58:00.000Z">
+<meta property="article:modified_time" content="2024-04-28T17:01:02.808Z">
+<meta property="article:author" content="Tomu Lee">
+<meta property="article:tag" content="Reading notes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tomuli.cc/2024/04/28/note-arch-02/note-arch-02-segregation.png">
+
+<link rel="canonical" href="https://tomuli.cc/2024/04/28/note-arch-02/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms | Tomu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tomu's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://tomuli.cc/2024/04/28/note-arch-02/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Tomu Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tomu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-04-28 22:58:00" itemprop="dateCreated datePublished" datetime="2024-04-28T22:58:00+08:00">2024-04-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-04-29 01:01:02" itemprop="dateModified" datetime="2024-04-29T01:01:02+08:00">2024-04-29</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Reading-notes/" itemprop="url" rel="index"><span itemprop="name">Reading notes</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>之前參加的讀書會選書，當時讀書會進行到後期的時候，參與的大家都對這本書有類似的反饋：書中敘述的內容因為沒有實例佐證所以有些內容較無法想像。那時候我認為等開發經驗多累積一點再回來看這本書應該會有較深的感受，再加上書中前面的內容其實沒有上面提到的問題，個人覺得對初探架構的自己來說是有幫助的，因此打算至少整理一下到 SOLID Principles 前的讀書筆記。</p>
+<span id="more"></span>
+
+
+
+<blockquote>
+<p>本文所有圖片和程式碼都來自<a target="_blank" rel="noopener" href="https://www.amazon.com/Clean-Architecture-Craftsmans-Software-Structure/dp/0134494164/">原書內容</a>。</p>
+</blockquote>
+<h2 id="What-is-Programming-Paradigm-Chapter-3"><a href="#What-is-Programming-Paradigm-Chapter-3" class="headerlink" title="What is Programming Paradigm? (Chapter 3)"></a>What is Programming Paradigm? (Chapter 3)</h2><p>書中提到的三種 Paradigm 如下：</p>
+<ul>
+<li>Structured Programming<ul>
+<li>即使用常見的 <code>if/then/else</code>, <code>do/while/until</code> (結構化)，限制 <code>goto</code> (跳轉)。</li>
+<li>限制程式控制權的直接轉移 (<code>goto</code>)。</li>
+</ul>
+</li>
+<li>Object-Oriented Programming<ul>
+<li>利用 <code>class</code> 取代 Function pointer 來達成 Polymorphism。</li>
+<li>限制程式控制權的間接轉移 (Pointers to functions)。</li>
+</ul>
+</li>
+<li>Functional Programming<ul>
+<li>核心: 符號的不可變性。</li>
+<li>限制 Assignment statement (在很嚴苛的情況下才能達成)。</li>
+</ul>
+</li>
+</ul>
+<p>參考上面條列的內容可以看出，在本書中 Programming paradigm 就是限制我們什麼不能做的規範。書中描述如下：</p>
+<blockquote>
+<p>Each (paradigms) imposes some kind of extra discipline that is negative in its intent. The paradigms tell us what not to do, more than they tell us what to do.</p>
+</blockquote>
+<p>我想大家看到這邊可能會有一點疑問：這些 Paradigm 和本書的重點 Architecture 有什麼關係？ 主要是隨著軟體開發的發展，大家漸漸明白什麼事情不能做，才容易讓軟體有好的架構。</p>
+<p>接下來我會對這三種 Paradigm 做更詳細的介紹。</p>
+<h2 id="Structured-Programming-Chapter-4"><a href="#Structured-Programming-Chapter-4" class="headerlink" title="Structured Programming (Chapter 4)"></a>Structured Programming (Chapter 4)</h2><p>由於大部分人開始學習程式語言應該都是從 Structured programming 開始，因此這個章節蠻好理解的。</p>
+<p>章節的前半段主要介紹了在早期 <code>goto</code> statement 被廣泛使用的時代，Edsger Wybe Dijkstra 將除了 Simple selection (<code>if/then/else</code>) 和 Iteration control structures (<code>do/while</code>) 等情境下使用的 <code>goto</code> Statement 都視為 Harmful。主要原因是這類 <code>goto</code> 的使用會造成一個系統沒有辦法被遞迴拆成更小的 Provable unit 來證明一段程式的正確性。</p>
+<p>不過照 Dijkstra 的理想來將每段程式都用數學去證明正確性需要花費太多資源，並不現實，因此後來發展成用較科學的方式來證明行為的正確性。書中描述如下：</p>
+<blockquote>
+<p>Structured programming forces us to recursively decompose a program into a set of small provable functions. We can then use tests to try to prove those small provable functions incorrect. If such tests fail to prove incorrectness, then we deem the functions to be correct enough for our purposes.</p>
+</blockquote>
+<p>以實務的角度來看其實就是寫 Test 或請 QA 跑 Checklist，只要能順利通過，我們就能信任產品至少在已知範圍內行為是正確的。</p>
+<p>以 Architecture 的角度來說，Structured programming 提供了將不論是小小的 Function 或較大的 Component 進一步拆分 Modules, Components, Services 的能力，也更方便進行測試。</p>
+<h2 id="Object-Oriented-Programming-Chapter-5"><a href="#Object-Oriented-Programming-Chapter-5" class="headerlink" title="Object-Oriented Programming (Chapter 5)"></a>Object-Oriented Programming (Chapter 5)</h2><h3 id="What-is-OO"><a href="#What-is-OO" class="headerlink" title="What is OO?"></a>What is OO?</h3><p>在開始了解物件導向程式與 Architecture 的關係之前，我們需要先了解物件導向是什麼：</p>
+<ul>
+<li>The combination of data and function.</li>
+<li>A way to model the real world.</li>
+<li>Three magic words<ul>
+<li>Encapsulation</li>
+<li>Inheritance</li>
+<li>Polymorphism</li>
+</ul>
+</li>
+</ul>
+<p>前兩者的敘述或是不夠貼切，或是有些空泛，書中以第三種定義來進一步延伸討論。</p>
+<h3 id="Encapsulation"><a href="#Encapsulation" class="headerlink" title="Encapsulation"></a>Encapsulation</h3><p>因為藉由 OO 提供的 <code>class</code>，其 <code>private</code>&#x2F;<code>public</code> members，我們能輕易做到決定一個物件中的哪些部分要隱藏，哪些部分則能開成介面讓外部知道，所以封裝常常被視為 OO 的一環。不過這其實並非 OO 獨有的特性，像是在 C 中，我們可以在 Header file 開出介面，並將實作細節藏在 <code>.c</code> 檔中 (Implementation file)。</p>
+<p>C++ 反而稍微破壞了封裝這個特性，因為 Compiler 會要求 <code>class</code> 的 Member 在 Header file 中 Declare，在這種情況下即使用 <code>private</code> 來限制對這些 Member 的存取，但對使用的 Client 來說他還是因此知道了 <code>class</code> 中的資訊。更不用說像是 Java&#x2F;C# 這些 OO 語言是完全將 Declaration 和 Implementation 混合在相同的檔案中的。</p>
+<blockquote>
+<p>Note: 應該可以透過 Pimpl idiom 來完成 header file 中實作細節的分離，不過就還需要再多包一層 Inner class。</p>
+</blockquote>
+<p>因此，很難說封裝是 OO 的必要條件。</p>
+<h3 id="Inheritance"><a href="#Inheritance" class="headerlink" title="Inheritance"></a>Inheritance</h3><p>和封裝不同，OO 的確讓繼承更為輕易，不過其實非 OO 語言也能做到繼承，以 C 為例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 限於篇幅，沒有將所有 Implementation 的部分放上來</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// point.h</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Point</span>;</span><br><span class="line"><span class="function"><span class="type">double</span> <span class="title">distance</span> <span class="params">(<span class="keyword">struct</span> Point *p1, <span class="keyword">struct</span> Point *p2)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// point.c</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Point</span> &#123;</span><br><span class="line">    <span class="type">double</span> x,y;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// namedPoint.h</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">NamedPoint</span>;</span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">NamedPoint</span>* <span class="built_in">makeNamedPoint</span>(<span class="type">double</span> x, <span class="type">double</span> y, <span class="type">char</span>* name);</span><br><span class="line"></span><br><span class="line"><span class="comment">// namedPoint.c</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">NamedPoint</span> &#123;</span><br><span class="line">    <span class="type">double</span> x,y;</span><br><span class="line">    <span class="type">char</span>* name;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// main.c</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> ac, <span class="type">char</span>** av)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">NamedPoint</span>* origin = <span class="built_in">makeNamedPoint</span>(<span class="number">0.0</span>, <span class="number">0.0</span>, <span class="string">&quot;origin&quot;</span>);</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">NamedPoint</span>* upperRight = <span class="built_in">makeNamedPoint</span> (<span class="number">1.0</span>, <span class="number">1.0</span>, <span class="string">&quot;upperRight&quot;</span>);</span><br><span class="line"> </span><br><span class="line">    <span class="type">double</span> dist = <span class="built_in">distance</span>(</span><br><span class="line">        (<span class="keyword">struct</span> Point*) origin, </span><br><span class="line">        (<span class="keyword">struct</span> Point*) upperRight)</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到上面的 code 中，由於我們還是可以用比較 tricky 的方式，將 <code>NamedPoint</code> cast 為 <code>Point</code>，不過如果使用 OO 語言，就不需要顯式轉型了，因此 OO 確實為繼承帶來了便利性。</p>
+<h3 id="Polymorphism"><a href="#Polymorphism" class="headerlink" title="Polymorphism"></a>Polymorphism</h3><p>與封裝、繼承類似，其實在 OO 語言之前的語言也能實現多型，我們可以用 C 的 <code>getchar</code> 來為例，<code>getchar</code> 會從 STDIN 讀取資料，但 STDIN 是哪個 IO device？ 同理，<code>putchar</code> 中的 STDOUT 是哪個 IO device？ 書中提到：</p>
+<blockquote>
+<p>The UNIX operating system requires that every IO device driver provide five standard functions: open, close, read, write, and seek. </p>
+</blockquote>
+<p>也就是說 UNIX OS 要求 IO device driver 要實作 <code>File</code> 這個 <code>struct</code> (介面)：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">FILE</span> &#123;</span><br><span class="line">    <span class="built_in">void</span> (*open)(<span class="type">char</span>* name, <span class="type">int</span> mode);</span><br><span class="line">    <span class="built_in">void</span> (*close)();</span><br><span class="line">    <span class="built_in">int</span> (*read)();</span><br><span class="line">    <span class="built_in">void</span> (*write)(<span class="type">char</span>);</span><br><span class="line">    <span class="built_in">void</span> (*seek)(<span class="type">long</span> index, <span class="type">int</span> mode);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而對 <code>getchar</code> 來說，他其實只是 Call driver 實作的介面 (<code>FILE</code> 中的 <code>read</code>)，而並不在意實作的細節：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">struct</span> <span class="title class_">FILE</span>* STDIN;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">getchar</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> STDIN-&gt;<span class="built_in">read</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>不過如上述使用 Pointers to functions 來達成的多型是危險的，不論是實作者或是呼叫者都需要遵守同樣的 Convention。而對於 OO 語言來說，多型的達成變得更加便利且安全 (只需要透過如 <code>virtual</code> keyword 就能簡單做到，也不需要在意其背後如 vtable 的實作細節)。</p>
+<p>不過多型對 Architecture 來說很重要嗎？我們回到上面提到的：對 <code>getchar</code> 來說，他其實只是 Call driver 實作的介面，而並不在意實作的細節。即使換了新的 IO device，只要 Driver 也有實作 <code>FILE</code> 中的 <code>read</code>，<code>getchar</code> 也不需要做任何的改動。換言之，IO device 可以被視為 <code>getchar</code> 的一個 <strong>Plugin</strong>。</p>
+<p>因此多型能讓 High-level functions (<code>getchar</code>) 不再相依於 Mid&#x2F;Low-level functions (Driver 對<code>read</code> 的實作)，而是相依於一個 Interface (<code>FILE</code> 中的 <code>read</code>)；與此同時 IO device 也需相依於 <code>FILE</code> 才知道需要實作哪些介面 (<code>read</code>) 提供給上層使用。上述現象讓 Dependency 變成：</p>
+<pre class="mermaid">graph LR;
+    getchar --> read["FILE->read"]
+    Driver --> read</pre>
+
+
+<p>這個現象與一般來說 High-level 直接相依 low-level 的關係不同，也因此被稱為 Dependency Inversion。而這也讓 Software architect 有能力控制系統中各 Unit 的相依性而不限於 Flow of control。舉例來說我們可以讓 UI 和 Database 之間互不相依，而是都相依於 Business Rules：</p>
+<pre class="mermaid">graph LR;
+    UI --> Business["Business Rules"]
+    Database --> Business</pre>
+
+
+<p>也因此上面三個部份可以各自被視為獨立的 Component，如果某個 Component source code 有改動，只需要重新 Deploy 這個 Component 就可以了，也即是 Independent deployability，而這通常也意味著 Independent developability。</p>
+<h2 id="Functional-Programming-Chapter-6"><a href="#Functional-Programming-Chapter-6" class="headerlink" title="Functional Programming (Chapter 6)"></a>Functional Programming (Chapter 6)</h2><h3 id="Structured-vs-Functional"><a href="#Structured-vs-Functional" class="headerlink" title="Structured vs Functional"></a>Structured vs Functional</h3><p>首先我們來比較一下之前介紹的 Structured Programming 與 Functional Programming，以下實作一個 function 去印出 1 到 25 的平方：</p>
+<ul>
+<li>Java (SP)  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Squint</span> &#123;</span><br><span class="line">     <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String args[])</span> &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> i=<span class="number">0</span>; i&lt;<span class="number">25</span>; i++)</span><br><span class="line">            System.out.println(i*i);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>Clojure (FP)  <figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">(<span class="name">println</span> <span class="comment">;___________________ Print</span></span><br><span class="line">    (<span class="name"><span class="built_in">take</span></span> <span class="number">25</span> <span class="comment">;_________________ the first 25</span></span><br><span class="line">        (<span class="name"><span class="built_in">map</span></span> (<span class="name"><span class="built_in">fn</span></span> [x] (<span class="name"><span class="built_in">*</span></span> x x)) <span class="comment">;__ squares</span></span><br><span class="line">            (<span class="name"><span class="built_in">range</span></span>)))) <span class="comment">;___________ of Integers</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>在 Clojure 的 code 中，<code>println</code>, <code>take</code>, <code>map</code> 和 <code>range</code> 都是 function。可以觀察到 Java 的 code 中有用到一個變數 <code>i</code> 來控制 Loop，但 Clojure 的 code 中沒有這種變數，這也是這個章節中最關注的 FP 特性：</p>
+<blockquote>
+<p>Variables in functional languages do not vary.</p>
+</blockquote>
+<h3 id="Immutablity-and-Architecture"><a href="#Immutablity-and-Architecture" class="headerlink" title="Immutablity and Architecture"></a>Immutablity and Architecture</h3><p>之所以 Architect 需要考慮變數是否 Mutable，是因為所有的 Race conditions, Deadlock conditions 和 Concurrent update problems 都和 Mutable variable 有關。換言之，一旦可以保證 Immutablity，就不需要擔心 Concurrency applications 可能遇到的上述問題。不過實務上資源是有限的，要讓整個 Application 都做到符合這個特性不太可行，通常需要作一些妥協。</p>
+<p>比較常見的方式是將 Application 拆成 Mutable 和 Immutable 兩種 Component，如下圖：</p>
+<p><img src="/2024/04/28/note-arch-02/note-arch-02-segregation.png" alt="note-arch-02-segregation"></p>
+<p>Immutable component 中不會對其狀態&#x2F;變數進行修改，也因此 Architect 應該要努力讓大部分的邏輯都歸於這類 Component 中。至於 Mutable component 則會對其狀態&#x2F;變數進行修改，也因此常會透過如 Transactional memory 的概念來保護其可變的狀態&#x2F;變數。</p>
+<h3 id="Example-Event-Sourcing"><a href="#Example-Event-Sourcing" class="headerlink" title="Example: Event Sourcing"></a>Example: Event Sourcing</h3><p>雖然上面提到實務上需要作一些妥協，不過隨著 Storage 和 Processor 的進步，能做到 Immutable state 的比重也會越來越多，書中以銀行帳戶餘額為例來介紹這樣的 Application：</p>
+<ul>
+<li>不去紀錄客戶帳戶餘額為多少 (State)，而是將所有的 Transaction log 記錄下來。</li>
+<li>有人想要查餘額的時候，就將他全部的 Transaction 都撈出來，然後從第一筆加總到最後即可得知結果。</li>
+</ul>
+<p>這就是 Event Sourcing 的概念，顯然在這種概念下設計的 Application 以 CRUD 的角度來看只會有 CR commands，不需要 Mutable variable，也不會有任何 Concurrent update 的問題。</p>
+<p>不過隨著時間過去，Transaction Log 的數量會不斷增長，Storage 的需求和查餘額時需要的處理時間都會不斷上升，也因此理論上需要無限的資源才能讓這種設計可行，但這種設計還是有一些可能的使用情境，如下：</p>
+<ul>
+<li>Application lifetime 有限，或許有限的資源即可滿足。</li>
+<li>還是保留一點 UD：比方說每天在半夜統整當天的 Transaction，因此查餘額只需要對當天的 Transaction 加總就好了。</li>
+</ul>
+<h2 id="Things-to-Remember"><a href="#Things-to-Remember" class="headerlink" title="Things to Remember"></a>Things to Remember</h2><ul>
+<li><p>To the software architect: OO is the ability, through the use of polymorphism, to gain absolute control over every source code dependency in the system. </p>
+</li>
+<li><p>Plugin architecture: The low-level details are relegated to plugin modules that can be deployed and developed independently from high-level policies.</p>
+</li>
+<li><p>With infinite storage and processor power, we can make our applications entirely immutable (entirely functional).</p>
+</li>
+<li><p>Paradigms has taken something away from us.</p>
+</li>
+</ul>
+<blockquote>
+<p>What we have learned over the last half-century is what not to do.</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Reading-notes/" rel="tag"># Reading notes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/04/22/maillog/" rel="prev" title="Postfix Logging 功能開發 - Mail Log 解讀, Postfix 架構簡介, 與 Logging 功能雜談">
+      <i class="fa fa-chevron-left"></i> Postfix Logging 功能開發 - Mail Log 解讀, Postfix 架構簡介, 與 Logging 功能雜談
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#What-is-Programming-Paradigm-Chapter-3"><span class="nav-number">1.</span> <span class="nav-text">What is Programming Paradigm? (Chapter 3)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Structured-Programming-Chapter-4"><span class="nav-number">2.</span> <span class="nav-text">Structured Programming (Chapter 4)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Object-Oriented-Programming-Chapter-5"><span class="nav-number">3.</span> <span class="nav-text">Object-Oriented Programming (Chapter 5)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#What-is-OO"><span class="nav-number">3.1.</span> <span class="nav-text">What is OO?</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Encapsulation"><span class="nav-number">3.2.</span> <span class="nav-text">Encapsulation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Inheritance"><span class="nav-number">3.3.</span> <span class="nav-text">Inheritance</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Polymorphism"><span class="nav-number">3.4.</span> <span class="nav-text">Polymorphism</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Functional-Programming-Chapter-6"><span class="nav-number">4.</span> <span class="nav-text">Functional Programming (Chapter 6)</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Structured-vs-Functional"><span class="nav-number">4.1.</span> <span class="nav-text">Structured vs Functional</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Immutablity-and-Architecture"><span class="nav-number">4.2.</span> <span class="nav-text">Immutablity and Architecture</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Example-Event-Sourcing"><span class="nav-number">4.3.</span> <span class="nav-text">Example: Event Sourcing</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Things-to-Remember"><span class="nav-number">5.</span> <span class="nav-text">Things to Remember</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tomu Lee"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Tomu Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">5</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">3</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tomuli423" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tomuli423" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yu-jung-lee-475457222" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yu-jung-lee-475457222" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:leetomu423@gmail.com" title="Email → mailto:leetomu423@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tomu Lee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
