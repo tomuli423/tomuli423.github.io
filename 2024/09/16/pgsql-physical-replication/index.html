@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tomuli.cc","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","width":350,"display":"always","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前陣子 Team 上在研究 Application layer 的 Scaled-out solution，我負責研究其中的 Database cluster package，在這邊想分享一下當時研究的技術和開發心得，也作為自己未來可以參考的筆記 XD。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication">
+<meta property="og:url" content="https://tomuli.cc/2024/09/16/pgsql-physical-replication/index.html">
+<meta property="og:site_name" content="Tomu&#39;s Blog">
+<meta property="og:description" content="前陣子 Team 上在研究 Application layer 的 Scaled-out solution，我負責研究其中的 Database cluster package，在這邊想分享一下當時研究的技術和開發心得，也作為自己未來可以參考的筆記 XD。">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-09-15T17:25:07.000Z">
+<meta property="article:modified_time" content="2024-09-15T17:25:07.623Z">
+<meta property="article:author" content="Tomu Lee">
+<meta property="article:tag" content="PostgreSQL">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://tomuli.cc/2024/09/16/pgsql-physical-replication/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication | Tomu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tomu's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://tomuli.cc/2024/09/16/pgsql-physical-replication/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Tomu Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tomu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-09-16 01:25:07" itemprop="dateCreated datePublished" datetime="2024-09-16T01:25:07+08:00">2024-09-16</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/PostgreSQL/" itemprop="url" rel="index"><span itemprop="name">PostgreSQL</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前陣子 Team 上在研究 Application layer 的 Scaled-out solution，我負責研究其中的 Database cluster package，在這邊想分享一下當時研究的技術和開發心得，也作為自己未來可以參考的筆記 XD。</p>
+<span id="more"></span>
+
+<p>另外這篇文章比較偏向一種 Replication 模型的實務架設，非常推薦閱讀 <a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/">Designing Data-Intensive Applications</a> 的第五章來更全面的認識 Replication，也希望之後能排出時間整理這本書一些章節的讀書筆記。</p>
+<blockquote>
+<p>以 PostgreSQL 來說，每一個 Server 即為由多個 Database 共同組成的 Cluster，不過我在這篇文章中提到的 Cluster 是指藉由 PostgreSQL physical replication 同步資料的多個 PostgreSQL server。 </p>
+</blockquote>
+<h2 id="What-is-Replication-Why-is-It-Necessary"><a href="#What-is-Replication-Why-is-It-Necessary" class="headerlink" title="What is Replication? Why is It Necessary?"></a>What is Replication? Why is It Necessary?</h2><p>Replication 即是將資料同步至其他 Database server 的過程。單一 Server 常受限於效能與可靠性，此時可以付出較高昂的成本 Scaled-up，不過也只能改善效能；而 Scaled-out solution 則有機會同時改善這兩個項目，以下條列包含 Replication 在內的一些相關功能:</p>
+<ul>
+<li>Performance<ul>
+<li>Load distribution</li>
+<li>Read&#x2F;Write splitting</li>
+</ul>
+</li>
+<li>High Availability<ul>
+<li>Replication</li>
+<li>Failover</li>
+<li>Main server recovery</li>
+</ul>
+</li>
+</ul>
+<p>我們的產品使用 PostgreSQL 作為 Database，因此關於 Replication 主要就是在 Physical 和 Logical 間考量。由於產品目標主要是整個 Database 的 Repliation，不需要為了追求 Logical  replication 的高自由度而承擔如<a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/15/logical-replication-restrictions.html">這篇</a>提到的限制，因此還是選用了 Physical replication。</p>
+<p>至於其他條列的功能，經過一番<a target="_blank" rel="noopener" href="https://wiki.postgresql.org/wiki/Replication,_Clustering,_and_Connection_Pooling">調查</a>，我們選擇功能較為完整的 PgPool-II 作為研究對象。</p>
+<p><code>TODO: 今天這篇主要會分享 PostgreSQL 的 Physical replication，預期會再有一篇文章介紹 PgPool-II 的部分。</code></p>
+<h2 id="PostgreSQL-Physical-Replication"><a href="#PostgreSQL-Physical-Replication" class="headerlink" title="PostgreSQL Physical Replication"></a>PostgreSQL Physical Replication</h2><p>在介紹設定方式，先來介紹一下 Physical replication:</p>
+<ul>
+<li>Single leader (Primary&#x2F;Main server) and multiple follower (Replica):<ul>
+<li>Main server 負責處理 Write queries，再將改動的資訊同步給所有 Replica。</li>
+<li>所有 Node 都能處理 Read queries，不過如果要實現 Read&#x2F;Write splitting 的話通常會分流給 Replica。</li>
+</ul>
+</li>
+<li>Delivery of WAL files: 上述的資訊傳遞是 Primary server&#x2F;Replica 分別藉由 WAL sender&#x2F;receiver 來傳送&#x2F;接收，由於是直接傳送 WAL file，因此會有以下特性:<ul>
+<li>需要 Binary level 相容性，也是被稱為 <code>Physical</code> 的原因 (相對而言 Logical 則是 Protocol level 相容性)。</li>
+<li>Primary server&#x2F;Replica 的 PostgreSQL 版本需要相同。</li>
+<li>沒有辦法做到 Parital&#x2F;Conditional replication，只能以整個 Server 為單位進行 Replicate。</li>
+<li>需要確保資訊傳遞時 WAL file 仍存在。<ul>
+<li>Replication slot: 紀錄每個 Replica 目前接收到的最新 LSN，WAL file 需要在確認所有 Replica 都已經同步到其中的紀錄之後才可以清掉。下文的流程介紹會用這種方式。</li>
+<li>WAL archive: 設定會在 WAL file 滿的時候執行的 <code>archive_command</code> 來產生 WAL file 的備份，要同步給 Replica 時如果發現 WAL 已經清掉了就會透過 <code>restore_command</code> 從 Archive 拿。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Setup-Steps-and-Configuration"><a href="#Setup-Steps-and-Configuration" class="headerlink" title="Setup Steps and Configuration"></a>Setup Steps and Configuration</h2><p>以下會大致介紹 Physical replication 的設定流程 (1 Main server and 1 Replica)，其中 Command&#x2F;Configuration 僅供參考，請依環境&#x2F;需求調整:</p>
+<h3 id="Main-Server"><a href="#Main-Server" class="headerlink" title="Main Server"></a>Main Server</h3><ol>
+<li>Initialize the main server: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres initdb -D /var/lib/pgsql/data</span><br></pre></td></tr></table></figure></li>
+<li>Setup <code>postgresql.conf</code> for main server: <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># Physical replication can run with default configuration.</span><br><span class="line"># Therefore, only connection related setting are configured here.</span><br><span class="line">listen_addresses = &#x27;*&#x27;</span><br><span class="line"># Connection permission in pg_hba.conf.</span><br></pre></td></tr></table></figure></li>
+<li>Start the main server: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres pg_ctl -D /var/lib/pgsql/data start</span><br></pre></td></tr></table></figure></li>
+<li>Create role for replication: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -tA -c <span class="string">&quot;CREATE ROLE replication WITH LOGIN REPLICATION;&quot;</span></span><br></pre></td></tr></table></figure></li>
+<li>Create replication slot: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -tA -c <span class="string">&quot;SELECT pg_create_physical_replication_slot(&#x27;replica_1&#x27;);&quot;</span>)</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="Replica"><a href="#Replica" class="headerlink" title="Replica"></a>Replica</h3><ol start="6">
+<li>Create a standalone backup from primary server: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres pg_basebackup -h <span class="variable">$&#123;PRIMARY_IP&#125;</span> -U replication -D /var/lib/pgsql/data -X stream </span><br></pre></td></tr></table></figure></li>
+<li>Setup <code>postgresql.conf</code> for replica: <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">primary_conninfo = &#x27;host=$&#123;PRIMARY_IP&#125; port=5432 user=replication application_name=replica_1&#x27;</span><br><span class="line">primary_slot_name = &#x27;replica_1&#x27;</span><br></pre></td></tr></table></figure></li>
+<li>Tell the server to start as standby mode: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres <span class="built_in">touch</span> /var/lib/pgsql/data/standby.signal</span><br></pre></td></tr></table></figure></li>
+<li>Start the replica: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres pg_ctl -D /var/lib/pgsql/data start</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="Monitoring"><a href="#Monitoring" class="headerlink" title="Monitoring"></a>Monitoring</h3><ol start="10">
+<li>Show the state of the replication:<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -x -c <span class="string">&quot;SELECT * FROM pg_stat_replication&quot;</span></span><br></pre></td></tr></table></figure></li>
+<li>Check the current replication role:<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -c <span class="string">&quot;SELECT pg_is_in_recovery()&quot;</span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>f: Primary</li>
+<li>t: Replica</li>
+</ul>
+</li>
+<li>Monitor the status of the replication slots:<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -c <span class="string">&quot;SELECT * FROM pg_replication_slots&quot;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="More-Issues-about-PostgreSQL-Cluster"><a href="#More-Issues-about-PostgreSQL-Cluster" class="headerlink" title="More Issues about PostgreSQL Cluster"></a>More Issues about PostgreSQL Cluster</h2><p>至此我們已經初步建起藉由 PostgreSQL physical replication 同步資料的 Primary-Replica servers，此後只要 Primary 接收到 Write query 就會將改變同步至 Replica，也可以兩台 Server 處理相同的 Read query 應該要能觀察到相同的結果。</p>
+<p>在這篇文章的最後，我們回到這篇文章開頭提及的: Scaled-out solution 追求的幾個面向繼續進行討論，也延伸討論一些 Replication 在實務上會遇到的議題。</p>
+<h3 id="Request-Routing"><a href="#Request-Routing" class="headerlink" title="Request Routing"></a>Request Routing</h3><p>雖然我們已經建立多個 PostgreSQL server 參與的 Replciation 系統，每個 Server 各自能獨立處理 request，但如何將 Request 導到這些 Server 呢？我們可以讓 Application 自行處理，不過後續無論是新增 Replica，或 Primary server 的改變，都會需要 Application 接 hook 去改動連線對象，且需要自行實作演算法來均分 Request，因此除非受限環境或 Application 的 Request 非常<br>單純，不然不太推薦這種做法。</p>
+<p>比較常見的還是會在中間有一層 Proxy 來作為 Router，例如用途比較廣泛的 HAProxy，以及 For PostgreSQL 的 PgPool-II。如前文提到之後預期會有文章進一步介紹後者，因此這邊就不細談。</p>
+<h3 id="Network"><a href="#Network" class="headerlink" title="Network"></a>Network</h3><p>想像中多台 Server 各自處理連線應該會對效能有很大的改善，不過在實務上需要考慮 Network 的開銷。由於這點在加入上述的 Proxy 後會更為明顯，因此一樣預期在之後的文章中再討論。</p>
+<h3 id="Promote-Replica-to-Main-Server"><a href="#Promote-Replica-to-Main-Server" class="headerlink" title="Promote Replica to Main Server"></a>Promote Replica to Main Server</h3><p>需要對其中一台 Replica 進行 Role swtich 升級為 Main server 的場合主要有兩種:</p>
+<ul>
+<li>Scheduled switchover: 如原 Main Server 需要週期性的維護，但不想要因此中斷服務。</li>
+<li>Emergency switchover: Main server failure，即 Failover。</li>
+</ul>
+<p>只需在剛剛設定好的 Replica 執行以下指令即可升級:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo -u postgres pg_ctl -D /var/lib/pgsql/data -w promote</span><br></pre></td></tr></table></figure>
+
+<h3 id="Main-Server-Recovery"><a href="#Main-Server-Recovery" class="headerlink" title="Main Server Recovery"></a>Main Server Recovery</h3><p>等到原先的 Main server 維護完畢或異常修復後，需要再以 Replica 的身份去 Follow 新的 Main Server。</p>
+<ul>
+<li><p>如果原先的 Main server 是因為 Hardware 或 File system error 壞掉:</p>
+<ul>
+<li>只能清掉舊資料，重新以前文設定 Replica 的方式重建。</li>
+</ul>
+</li>
+<li><p>如果新 Main server 出現後，原本的 Main server 仍有處理 Write query，導致兩個 Server timeline diverge:</p>
+<ul>
+<li>一樣可以直接清掉再重建。</li>
+<li>有機會藉由 <a target="_blank" rel="noopener" href="https://postgrespro.com/docs/postgresql/15/app-pgrewind"><code>pg_rewind</code></a> 來重置差異，失敗了才整個清掉重建，參考指令如下:  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pg_rewind -D /var/lib/pgsql/data --source-server=<span class="string">&quot;user=postgres host=<span class="variable">$&#123;PRIMARY_IP&#125;</span> port=5432 dbname=postgres&quot;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>需注意要使用這個 Tool 的話需要滿足: the target server either has the wal_log_hints option enabled in postgresql.conf or data checksums enabled when the cluster was initialized with initdb. Neither of these are currently on by default. full_page_writes must also be set to on, but is enabled by default.</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Automation"><a href="#Automation" class="headerlink" title="Automation"></a>Automation</h3><p>PostgreSQL 原生並不支援 Failure detection，因此上面介紹的指令都需要手動執行，這對尤其是 Emergency switchover 的情境來說並不能接受，因此需要額外的 Watchdog 來 Monitor 各 server 的狀態。例如 repmgr 或前文提及多次的 PgPool-II，提供設定可以指定 Failover, Recovery 等事件發生時執行的指令。</p>
+<h3 id="Synchronization"><a href="#Synchronization" class="headerlink" title="Synchronization"></a>Synchronization</h3><p>PostgreSQL 的參數 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a> 在 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a> 不為空的時候 有多種不同設定，詳細等級可以參考官網說明。在這邊主要想探討的除了最高等級的 <code>remote_appy</code> 之外，都有可能遇到 Replication lag 的現象，即發給不同台 Server 的 Read request 可能得到不同的結果。</p>
+<blockquote>
+<p>前文因為想要盡量簡化設定流程，因此這項參數維持預設值。</p>
+</blockquote>
+<p>這可能導致 Application 行為有微妙的異常，例如對話內容時有時無、同時間和其他人看到的資訊不同等等。這些異常是 Distributed storage 常見的限制，有些在非同步的情況難以改善，有些則可能透過 Application 或 Request router 特別處理來克服，例如讓來自同個 User 的 Request 都被導到固定的 Server。</p>
+<p>這部分在 DDIA 的第五章中有相關的介紹，像一開始提到的希望之後能排出時間來整理筆記分享。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/PostgreSQL/" rel="tag"># PostgreSQL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/04/28/note-arch-02/" rel="prev" title="讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms">
+      <i class="fa fa-chevron-left"></i> 讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#What-is-Replication-Why-is-It-Necessary"><span class="nav-number">1.</span> <span class="nav-text">What is Replication? Why is It Necessary?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PostgreSQL-Physical-Replication"><span class="nav-number">2.</span> <span class="nav-text">PostgreSQL Physical Replication</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Setup-Steps-and-Configuration"><span class="nav-number">3.</span> <span class="nav-text">Setup Steps and Configuration</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Main-Server"><span class="nav-number">3.1.</span> <span class="nav-text">Main Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Replica"><span class="nav-number">3.2.</span> <span class="nav-text">Replica</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Monitoring"><span class="nav-number">3.3.</span> <span class="nav-text">Monitoring</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#More-Issues-about-PostgreSQL-Cluster"><span class="nav-number">4.</span> <span class="nav-text">More Issues about PostgreSQL Cluster</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Request-Routing"><span class="nav-number">4.1.</span> <span class="nav-text">Request Routing</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Network"><span class="nav-number">4.2.</span> <span class="nav-text">Network</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Promote-Replica-to-Main-Server"><span class="nav-number">4.3.</span> <span class="nav-text">Promote Replica to Main Server</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Main-Server-Recovery"><span class="nav-number">4.4.</span> <span class="nav-text">Main Server Recovery</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Automation"><span class="nav-number">4.5.</span> <span class="nav-text">Automation</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Synchronization"><span class="nav-number">4.6.</span> <span class="nav-text">Synchronization</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tomu Lee"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Tomu Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tomuli423" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tomuli423" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yu-jung-lee-475457222" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yu-jung-lee-475457222" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:leetomu423@gmail.com" title="Email → mailto:leetomu423@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tomu Lee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
