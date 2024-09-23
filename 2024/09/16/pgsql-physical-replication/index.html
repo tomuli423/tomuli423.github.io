@@ -28,7 +28,7 @@
 <meta property="og:description" content="前陣子 Team 上在研究 Application layer 的 Scaled-out solution，我負責研究其中的 Database cluster package，在這邊想分享一下當時研究的技術和開發心得，也作為自己未來可以參考的筆記 XD。">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-09-15T17:25:07.000Z">
-<meta property="article:modified_time" content="2024-09-15T17:25:07.623Z">
+<meta property="article:modified_time" content="2024-09-23T14:44:38.417Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="PostgreSQL">
 <meta name="twitter:card" content="summary">
@@ -191,6 +191,13 @@
 
               <time title="Created: 2024-09-16 01:25:07" itemprop="dateCreated datePublished" datetime="2024-09-16T01:25:07+08:00">2024-09-16</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2024-09-23 22:44:38" itemprop="dateModified" datetime="2024-09-23T22:44:38+08:00">2024-09-23</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -279,7 +286,7 @@
 </li>
 <li>Monitor the status of the replication slots:<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -c <span class="string">&quot;SELECT * FROM pg_replication_slots&quot;</span></span><br></pre></td></tr></table></figure></li>
 </ol>
-<h2 id="More-Issues-about-PostgreSQL-Cluster"><a href="#More-Issues-about-PostgreSQL-Cluster" class="headerlink" title="More Issues about PostgreSQL Cluster"></a>More Issues about PostgreSQL Cluster</h2><p>至此我們已經初步建起藉由 PostgreSQL physical replication 同步資料的 Primary-Replica servers，此後只要 Primary 接收到 Write query 就會將改變同步至 Replica，也可以兩台 Server 處理相同的 Read query 應該要能觀察到相同的結果。</p>
+<h2 id="More-Issues-about-PostgreSQL-Cluster"><a href="#More-Issues-about-PostgreSQL-Cluster" class="headerlink" title="More Issues about PostgreSQL Cluster"></a>More Issues about PostgreSQL Cluster</h2><p>至此我們已經初步建起藉由 PostgreSQL physical replication 同步資料的 Primary-Replica servers，此後只要 Primary server 接收到 Write query 就會將改變同步至 Replica，也可以兩台 Server 處理相同的 Read query 應該要能觀察到相同的結果。</p>
 <p>在這篇文章的最後，我們回到這篇文章開頭提及的: Scaled-out solution 追求的幾個面向繼續進行討論，也延伸討論一些 Replication 在實務上會遇到的議題。</p>
 <h3 id="Request-Routing"><a href="#Request-Routing" class="headerlink" title="Request Routing"></a>Request Routing</h3><p>雖然我們已經建立多個 PostgreSQL server 參與的 Replciation 系統，每個 Server 各自能獨立處理 request，但如何將 Request 導到這些 Server 呢？我們可以讓 Application 自行處理，不過後續無論是新增 Replica，或 Primary server 的改變，都會需要 Application 接 hook 去改動連線對象，且需要自行實作演算法來均分 Request，因此除非受限環境或 Application 的 Request 非常<br>單純，不然不太推薦這種做法。</p>
 <p>比較常見的還是會在中間有一層 Proxy 來作為 Router，例如用途比較廣泛的 HAProxy，以及 For PostgreSQL 的 PgPool-II。如前文提到之後預期會有文章進一步介紹後者，因此這邊就不細談。</p>
@@ -310,8 +317,8 @@
 </ul>
 </li>
 </ul>
-<h3 id="Automation"><a href="#Automation" class="headerlink" title="Automation"></a>Automation</h3><p>PostgreSQL 原生並不支援 Failure detection，因此上面介紹的指令都需要手動執行，這對尤其是 Emergency switchover 的情境來說並不能接受，因此需要額外的 Watchdog 來 Monitor 各 server 的狀態。例如 repmgr 或前文提及多次的 PgPool-II，提供設定可以指定 Failover, Recovery 等事件發生時執行的指令。</p>
-<h3 id="Synchronization"><a href="#Synchronization" class="headerlink" title="Synchronization"></a>Synchronization</h3><p>PostgreSQL 的參數 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a> 在 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a> 不為空的時候 有多種不同設定，詳細等級可以參考官網說明。在這邊主要想探討的除了最高等級的 <code>remote_appy</code> 之外，都有可能遇到 Replication lag 的現象，即發給不同台 Server 的 Read request 可能得到不同的結果。</p>
+<h3 id="Automation"><a href="#Automation" class="headerlink" title="Automation"></a>Automation</h3><p>PostgreSQL 原生並不支援 Failure detection，因此上面介紹的指令都需要手動執行。不過若是手動的話就無法支援 Emergency switchover 的情境了，也因此通常還需要額外有 Watchdog 來 Monitor 各 Server 的狀態，像是 repmgr 或前文提及多次的 PgPool-II 都可以指定 Failover, recovery 等事件發生時要執行的指令。</p>
+<h3 id="Synchronization"><a href="#Synchronization" class="headerlink" title="Synchronization"></a>Synchronization</h3><p>PostgreSQL 的參數 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-wal.html#GUC-SYNCHRONOUS-COMMIT">synchronous_commit</a> 在 <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/runtime-config-replication.html#GUC-SYNCHRONOUS-STANDBY-NAMES">synchronous_standby_names</a> 不為空的時候 有多種不同設定，詳細等級可以參考官網說明。在這邊主要想探討的是除了最高等級的 <code>remote_appy</code> 之外，都有可能遇到的 Replication lag 現象，即同時間發給不同台 Server 的 Read request 可能得到不同的結果。</p>
 <blockquote>
 <p>前文因為想要盡量簡化設定流程，因此這項參數維持預設值。</p>
 </blockquote>
@@ -338,7 +345,10 @@
     <a href="/2024/04/28/note-arch-02/" rel="prev" title="讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms">
       <i class="fa fa-chevron-left"></i> 讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2024/09/23/note-ddia-02/" rel="next" title="讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages">
+      讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -413,7 +423,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">7</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

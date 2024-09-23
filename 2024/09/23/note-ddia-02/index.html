@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tomuli.cc","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","width":350,"display":"always","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="只要提到 System design 的推薦書籍，總是會看到 Designing Data-Intensive Applications 這本書。實際上閱讀後覺得雖然偶爾會有點偏向理論，但內容的確非常廣泛，且介紹概念的情境、案例非常豐富，目前已經閱讀的前半本，每個章節都讓我收益良多，也因此想挑選這本書來整理摘要與筆記。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages">
+<meta property="og:url" content="https://tomuli.cc/2024/09/23/note-ddia-02/index.html">
+<meta property="og:site_name" content="Tomu&#39;s Blog">
+<meta property="og:description" content="只要提到 System design 的推薦書籍，總是會看到 Designing Data-Intensive Applications 這本書。實際上閱讀後覺得雖然偶爾會有點偏向理論，但內容的確非常廣泛，且介紹概念的情境、案例非常豐富，目前已經閱讀的前半本，每個章節都讓我收益良多，也因此想挑選這本書來整理摘要與筆記。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://tomuli.cc/2024/09/23/note-ddia-02/note-ddia-02-cv.png">
+<meta property="og:image" content="https://tomuli.cc/2024/09/23/note-ddia-02/note-ddia-02-graph.png">
+<meta property="article:published_time" content="2024-09-23T14:45:51.000Z">
+<meta property="article:modified_time" content="2024-09-23T14:48:21.899Z">
+<meta property="article:author" content="Tomu Lee">
+<meta property="article:tag" content="Reading notes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tomuli.cc/2024/09/23/note-ddia-02/note-ddia-02-cv.png">
+
+<link rel="canonical" href="https://tomuli.cc/2024/09/23/note-ddia-02/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages | Tomu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tomu's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://tomuli.cc/2024/09/23/note-ddia-02/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Tomu Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tomu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+              
+
+              <time title="Created: 2024-09-23 22:45:51 / Modified: 22:48:21" itemprop="dateCreated datePublished" datetime="2024-09-23T22:45:51+08:00">2024-09-23</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Reading-notes/" itemprop="url" rel="index"><span itemprop="name">Reading notes</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>只要提到 System design 的推薦書籍，總是會看到 Designing Data-Intensive Applications 這本書。實際上閱讀後覺得雖然偶爾會有點偏向理論，但內容的確非常廣泛，且介紹概念的情境、案例非常豐富，目前已經閱讀的前半本，每個章節都讓我收益良多，也因此想挑選這本書來整理摘要與筆記。</p>
+<span id="more"></span>
+
+
+
+<p>本書的第一章節主要在討論一個好的 Software service，其背後的 Data system (如 Database, message queue, cache, search indexes 等 tool) 該如何設計、建構。書中以三個面向: Reliability, scalability, maintainablity 來探討，非常值得一讀。不過由於並未涉及太多實際應用的技術，建議直接閱讀即可，關於本書的讀書筆記也將從第二章，也就是這篇文章開始做。</p>
+<blockquote>
+<p>本文的圖片和程式碼都來自<a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/">原書內容</a>。</p>
+</blockquote>
+<h2 id="Data-Model"><a href="#Data-Model" class="headerlink" title="Data Model"></a>Data Model</h2><p>Application 常常建立在分為多層 (Layer) 的 Data model，對於每層的開發者來說，只需關注如何用下一層的 Interface 來表現本層 (建模) ，如此透過抽象化底層實作來降低開發的複雜度。</p>
+<pre class="mermaid">graph TD;
+    api[API]-->struct[Data Structures]
+    struct-->store[Data Storage: JSON/XML/relational/graph data]
+    store-->bytes[Bytes in memory, on disk, or on a network]
+    bytes-->signal[Electrical currents, pulses of light, magnetic fields]</pre>
+
+<p>世界上存在很多 Data models，各自有其特性與適用情境。接下來的小節會介紹上圖 Data storage 那層的 Relational, document 以及一些 Graph data model。</p>
+<h2 id="Relational-Model-Versus-Document-Model"><a href="#Relational-Model-Versus-Document-Model" class="headerlink" title="Relational Model Versus Document Model"></a>Relational Model Versus Document Model</h2><h3 id="SQL-and-NoSQL"><a href="#SQL-and-NoSQL" class="headerlink" title="SQL and NoSQL"></a>SQL and NoSQL</h3><p>SQL (Relational model) 是至今最為盛行的一種 Data model，本節帶過其歷史，並繼續介紹到 NoSQL 的誕生（Non-SQL, Not Only SQL)，其相對於 Relational database 的優勢為：</p>
+<ul>
+<li>Scalability: 可以達到更大的 Dataset 與更高的 throughput。</li>
+<li>通常為 Open source。</li>
+<li>Relational model 對部分 Queries 支援性不佳。 </li>
+<li>Relational schema 限制太多，彈性與表意能力太差。</li>
+</ul>
+<p>當然不同 Applications 有不同 use case，不同需求下最適合的 Model 也不同，因此這兩者的關係並非互斥而是共存，即 Polyglot persistence。</p>
+<h3 id="The-Object-Relational-Mismatch"><a href="#The-Object-Relational-Mismatch" class="headerlink" title="The Object-Relational Mismatch"></a>The Object-Relational Mismatch</h3><p>為了配合 Application 開發常用的 OO 語言 (請參考 <a href="https://tomuli.cc/2024/04/28/note-arch-02/">讀書筆記｜Clean Architecture｜Part 2. Programming Paradigms</a> 的介紹)，Relational model 常常需要有一層 Object-relational mapping (ORM) 的 Translation layer 來解決 Object (Application code) 和 Relational data 間的 <em>impedance mismatch</em>。</p>
+<p><img src="/2024/09/23/note-ddia-02/note-ddia-02-cv.png" alt="note-ddia-02-cv"></p>
+<p>不過 ORM 無法完全消除 Object 和 Relational data 的不同。例如 one-to-many relationship，如上圖<code>一個</code> user 可能有<code>多個</code>工作經歷 (<code>positions</code>)，<code>多個</code>教育背景 (<code>educations</code>)，其 Relational schema 設計可能有以下幾種：</p>
+<ol>
+<li>較傳統的方式是正規化將工作經歷、教育背景等資訊各自存在獨立的 Table <code>positions</code>, <code>educations</code>，再透過 Foreign key referernce 建立與  <code>users</code> 的聯繫。</li>
+<li>較新的 SQL standard 有支援 Structured datatypes，如 XML, JSON document，可以讓 <code>users</code> 的一個 Column 就能存多個工作經歷、教育背景 (muti-value data)，並支援對這些 Document 的 Query 與 Index。。</li>
+<li>可以自行 encode 多個工作經歷、教育背景為 XML, JSON document，並儲存於 Text column，由 Application 拿到後自行 decode。不過這種方式就沒有辦法直接透過 Database 查詢到其中的值，也無法 Index。</li>
+</ol>
+<p>如果 Relational model 設計成第一種 multi-table schema，則需要透過多個 Query 或將不同表格透過<code>join</code> 結合，才能查詢到想要的結果。而如果後兩者較不會遇到這樣的問題，也可以說 Document model 較適合處理 one-to-many relationship data。</p>
+<blockquote>
+<p>工作在開發時常用 <a target="_blank" rel="noopener" href="https://soci.sourceforge.net/doc/master/">soci</a> 這個 LIbrary 來實作 ORM，由於在 Schema 設計上還是比較常使用第一種，也的確會遇到上文提到的問題。發多個 Query 很容易遇到 N + 1 queries 的效能問題，因此是不能接受的，因此目前常用的解法是針對每個需要 Join 的場合先建好 View，或是直接放棄ORM 改用 Raw query。</p>
+</blockquote>
+<h3 id="Many-to-One-and-Many-to-Many-Relationships"><a href="#Many-to-One-and-Many-to-Many-Relationships" class="headerlink" title="Many-to-One and Many-to-Many Relationships"></a>Many-to-One and Many-to-Many Relationships</h3><p>在上圖的履歷可以看到 user 的 region, industry 資訊是存為 id 而非有意義的文字，其實就是我們常說的正規化 (<em>normalization</em>) 去重複，能讓這些資訊更好維護。不過這樣的正規化會導致 many-to-one, many-to-many relationship 的產生，即 <code>多個</code> user 可能都居住於 <code>一個</code> 地區，或 <code>多個</code> user 各自的 <code>多個</code> 工作經歷可能都含有某公司。</p>
+<ul>
+<li><p>Relational model：和 one-to-many relationship 相同都可以用 <code>join</code> 結合後查詢。</p>
+</li>
+<li><p>Document model：支援性較差。</p>
+</li>
+<li><p>以前出現過和 Document model 有類似特性的 Hierarchical model 與 Network model，當時就有討論 Many-to-xxx relationship 在不同模型下的支援。</p>
+<ul>
+<li><p>Network model 主要是由 Application developer 決定 Query 的 <em>access path</em>，這和這篇文章開頭 Data model 的分層相違背。</p>
+</li>
+<li><p>相對而言 Relational database 通常由 Query optimizer 決定 access path，雖然 Query optimizer 的實作難度很高非常複雜，但一勞永逸，從長遠角度來說是較好的選擇。</p>
+</li>
+<li><p>為了避免步上這些歷史上的 Model 的後塵，現行的 Document model 有 Document reference，類似於 Relational model 的 Foreign key，用來支援 <code>join</code> 等 Query。</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Relational-Versus-Document-Databases-Today"><a href="#Relational-Versus-Document-Databases-Today" class="headerlink" title="Relational Versus Document Databases Today"></a>Relational Versus Document Databases Today</h3><p>從 Data model 的角度來說這兩種 Database 各有優勢：</p>
+<ul>
+<li>Relational：對 many-to-one, many-to-many relationship data, <code>join</code> 的支援較好。</li>
+<li>Document：schema flexibility, locality。</li>
+</ul>
+<blockquote>
+<p> 不過對於高度關聯的資料，雖然 Relational model 是優於 Document model 的選擇，但後文將介紹的 Graph model 是更適用的選擇。</p>
+</blockquote>
+<p>本小節雖然在比較 Document 和 Relational model，但這兩者並不是互斥的：</p>
+<ul>
+<li>如前文提到有些 Relational database system 有支援 Structured datatypes，如 XML, JSON document。</li>
+<li>有些 Document database 有支援 Relational-like joins。</li>
+</ul>
+<p>如果將來有更多 Database 同時支援這兩種 Model 的特性，對於 Application 來說也更便於挑選適合他們需求的功能。</p>
+<h4 id="Schema-Flexibility-in-the-Document-Model"><a href="#Schema-Flexibility-in-the-Document-Model" class="headerlink" title="Schema Flexibility in the Document Model"></a>Schema Flexibility in the Document Model</h4><p>前文提到 Document model 具有 Schema flexibility 的優勢，相對於 Relational model 必須嚴格根據 schema 進行寫入 (schema-on-write)，Doucment model 通常不具有這樣的限制，Document 如 JSON 可以寫入任意 key-value pair，自由度較高，但也因此在讀取時不保證資料存在 (schema-on-write)。詳細比較兩者的差異：</p>
+<table>
+<thead>
+<tr>
+<th align="center">schema-on-write</th>
+<th align="center">schema-on-read</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">static (compile-time) type checking</td>
+<td align="center">dynamic (runtime) type checking</td>
+</tr>
+<tr>
+<td align="center">強型別</td>
+<td align="center">弱型別 (record 可以是不同結構的, heterogeneous)</td>
+</tr>
+<tr>
+<td align="center">性能較佳</td>
+<td align="center">讀取時動態解析，因此性能較差</td>
+</tr>
+</tbody></table>
+<p>舉例來說，如果新版本想要對 schema 進行改動，如果是 schema-on-read 的 JSON，則對於未更新的既有資料 Application 可以直接在 code 中處理：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (user &amp;&amp; user.<span class="property">name</span> &amp;&amp; !user.<span class="property">first_name</span>) &#123;</span><br><span class="line">	<span class="comment">// Documents written before Dec 8, 2013 don&#x27;t have first_name</span></span><br><span class="line">	user.<span class="property">first_name</span> = user.<span class="property">name</span>.<span class="title function_">split</span>(<span class="string">&quot; &quot;</span>)[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>而 schema-on-write 的 Relational schema 則需要 downtime 進行 Migration &#x2F; Upgrade：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">TABLE</span> users <span class="keyword">ADD</span> <span class="keyword">COLUMN</span> first_name text;</span><br><span class="line"><span class="keyword">UPDATE</span> users <span class="keyword">SET</span> first_name <span class="operator">=</span> split_part(name, <span class="string">&#x27; &#x27;</span>, <span class="number">1</span>);</span><br></pre></td></tr></table></figure>
+
+<p>以上面用來 Migrate 的 SQL 來說，<code>ALTER</code> 通常不會造成太大的開銷，不過 <code>UPDATE</code> 在資料量大時會很慢不太適合，通常會建議用 <code>ALTER ... WITH DEFAULT</code>，或類似 Document model 的做法，一開始給 default 值 <code>NULL</code>，讀取時發現是 <code>NULL</code> 時再 <code>UPDATE</code>。</p>
+<h4 id="Data-Locality-for-Queries"><a href="#Data-Locality-for-Queries" class="headerlink" title="Data Locality for Queries"></a>Data Locality for Queries</h4><ul>
+<li>Document model 通常存於 encoded 為 JSON, XML 的 string，或其 Binary 格式。<ul>
+<li>存取整個 Document，則會有 <em>storage locality</em> 的效能優勢。</li>
+<li>但由於通常都需要將整個 Document load 進來才能操作，因此會建議控管每個 Document 的大小。</li>
+</ul>
+</li>
+<li>其他 Data model 也有類似的將資料 grouping 以達到 Locality 的優勢，例如 Oracle 的 <em>multi-table index cluster tables</em>。</li>
+</ul>
+<h2 id="Query-Languages-for-Data"><a href="#Query-Languages-for-Data" class="headerlink" title="Query Languages for Data"></a>Query Languages for Data</h2><p>這個小節前半部分主要在介紹 Imperative 和 Declarative 兩種 Programming language，以 Query language 來說，Imperative language 像是一步步下指令來取得資料 (Traverse 全部資料並將符合條件的資料加入結果)；Declarative language 則是直接宣告欲取得的資料的特徵 (需滿足什麼條件、怎麼呈現)。後者通常更簡潔，且隱藏了 Database engine 的實作細節，讓 Database system 有機會決定要用怎麼樣的 Algorithm 查詢，例如是否要平行運算。</p>
+<p>後半部分則介紹了 <em>MapReduce</em>，由於其在第十章節才會詳細介紹，這個小節只簡單介紹 MongoDB 中的 MapReduce。以統整每個月觀察到的鯊魚數量報告為例，以 PostgreSQL 的 Declarative SQL 和 MongoDB 中的 MapReduce 比較：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"># PostgreSQL</span><br><span class="line"><span class="keyword">SELECT</span> date_trunc(<span class="string">&#x27;month&#x27;</span>, observation_timestamp) <span class="keyword">AS</span> observation_month, <span class="built_in">sum</span>(num_animals) <span class="keyword">AS</span> total_animals</span><br><span class="line"><span class="keyword">FROM</span> observations</span><br><span class="line"><span class="keyword">WHERE</span> family <span class="operator">=</span> <span class="string">&#x27;Sharks&#x27;</span> <span class="keyword">GROUP</span> <span class="keyword">BY</span> observation_month;</span><br></pre></td></tr></table></figure>
+
+ <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// MongoDB</span></span><br><span class="line">db.<span class="property">observations</span>.<span class="title function_">mapReduce</span>(</span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">map</span>(<span class="params"></span>) &#123;</span><br><span class="line">    <span class="keyword">var</span> year = <span class="variable language_">this</span>.<span class="property">observationTimestamp</span>.<span class="title function_">getFullYear</span>();</span><br><span class="line">    <span class="keyword">var</span> month = <span class="variable language_">this</span>.<span class="property">observationTimestamp</span>.<span class="title function_">getMonth</span>() + <span class="number">1</span>;</span><br><span class="line">    <span class="title function_">emit</span>(year + <span class="string">&quot;-&quot;</span> + month, <span class="variable language_">this</span>.<span class="property">numAnimals</span>);</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="keyword">function</span> <span class="title function_">reduce</span>(<span class="params">key, values</span>) &#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="title class_">Array</span>.<span class="title function_">sum</span>(values);</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">query</span>: &#123; <span class="attr">family</span>: <span class="string">&quot;Sharks&quot;</span> &#125;,</span><br><span class="line">    <span class="attr">out</span>: <span class="string">&quot;monthlySharkReport&quot;</span>	</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+
+
+<p>SQL 的範例較好理解因此這邊略過說明，MapReduce 的部分處理步驟如下：</p>
+<ol>
+<li><p>只要是符合 #12  Query 條件的 Record，就會對其呼叫 #3 實作的 <code>map</code> function，每個 Record 最後需回傳 (<code>emits</code>) 一個 key-value pair，以 Record 如下為例會回傳 <code>&#123;1995-12, 3&#125;</code>。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  observationTimestamp<span class="punctuation">:</span> Date.parse(<span class="string">&quot;Mon, 25 Dec 1995 12:34:56 GMT&quot;</span>)<span class="punctuation">,</span></span><br><span class="line">  family<span class="punctuation">:</span>     <span class="string">&quot;Sharks&quot;</span><span class="punctuation">,</span></span><br><span class="line">  species<span class="punctuation">:</span>    <span class="string">&quot;Carcharodon carcharias&quot;</span><span class="punctuation">,</span></span><br><span class="line">  numAnimals<span class="punctuation">:</span> <span class="number">3</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>對所有 key-value pairs 根據 Key 分組，對每一組有相同 Key 的 key-value pairs  呼叫 #8 實作的 <code>reduce</code> function，加總所有 Value。</p>
+</li>
+<li><p>將結果寫至 #13 的 output 中。</p>
+</li>
+</ol>
+<p> <em>MapReduce</em> 這個 Programming model 還有一些特性如下：</p>
+<ul>
+<li><code>map</code>, <code>reduce</code> 在 Functional programming language 中常被使用，這兩隻 Function 常對實作有所限制，以利於背後平行分派，如限制其為 <em>pure function</em> (同樣 Input 就會得到同樣 Output、不能有 Side effects)。</li>
+<li>是 Low-level programming model，即有可能是 SQL 這個高階宣告式查詢語言背後的實作。</li>
+<li>這邊的範例使用到 Javascript，不過這並非是 MapReduce 的專利。</li>
+</ul>
+<p>另外也可以利用 MongoDB 2.2 開始支援的 <em>aggregate pipeline</em> 來讓其更貼近 Declarative query language 的特性：Query optimizer 有更高的自由度去改善此 Query 的效能。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">db.observations.aggregate(<span class="punctuation">[</span></span><br><span class="line">  <span class="punctuation">&#123;</span> $match<span class="punctuation">:</span> <span class="punctuation">&#123;</span> family<span class="punctuation">:</span> <span class="string">&quot;Sharks&quot;</span> <span class="punctuation">&#125;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="punctuation">&#123;</span> $group<span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    _id<span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      year<span class="punctuation">:</span>  <span class="punctuation">&#123;</span> $year<span class="punctuation">:</span>  <span class="string">&quot;$observationTimestamp&quot;</span> <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">      month<span class="punctuation">:</span> <span class="punctuation">&#123;</span> $month<span class="punctuation">:</span> <span class="string">&quot;$observationTimestamp&quot;</span> <span class="punctuation">&#125;</span></span><br><span class="line">	<span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">	totalAnimals<span class="punctuation">:</span> <span class="punctuation">&#123;</span> $sum<span class="punctuation">:</span> <span class="string">&quot;$numAnimals&quot;</span> <span class="punctuation">&#125;</span> <span class="punctuation">&#125;</span><span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">]</span>);</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="Graph-Like-Data-Models"><a href="#Graph-Like-Data-Models" class="headerlink" title="Graph-Like Data Models"></a>Graph-Like Data Models</h2><p>前文提到對於高度關聯的資料 (Social graph, web graph, road networks)，Graph model 是更適用的選擇，包含：</p>
+<ul>
+<li>Property graph model</li>
+<li>Triple-store model</li>
+</ul>
+<p>相關的 Query languarge 則有</p>
+<ul>
+<li>Cypher</li>
+<li>SPARQL</li>
+<li>Datalog</li>
+</ul>
+<p>不過這篇文章只打算介紹其中 Property graphs 和 Cypher 的部分來大致了解 Graph model 的 Use case，其餘就等有碰到再回去書中查詢。以下圖中一對夫妻的 Social graph 為例 ：</p>
+<p><img src="/2024/09/23/note-ddia-02/note-ddia-02-graph.png" alt="note-ddia-02-graph"></p>
+<h3 id="Property-Graphs"><a href="#Property-Graphs" class="headerlink" title="Property Graphs"></a>Property Graphs</h3><p>Property graph model 包含 Vertex 和 Edge，我們用 Relational schema 來表示這兩者的組成：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> vertices (</span><br><span class="line">  vertex_id <span class="type">integer</span> <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">  properties json</span><br><span class="line">);</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> edges (</span><br><span class="line">  edge_id <span class="type">integer</span> <span class="keyword">PRIMARY</span> KEY,</span><br><span class="line">  tail_vertex <span class="type">integer</span> <span class="keyword">REFERENCES</span> vertices (vertex_id),</span><br><span class="line">  head_vertex <span class="type">integer</span> <span class="keyword">REFERENCES</span> vertices (vertex_id),</span><br><span class="line">  label text,</span><br><span class="line">  properties json</span><br><span class="line">);</span><br><span class="line"><span class="keyword">CREATE</span> INDEX edges_tails <span class="keyword">ON</span> edges (tail_vertex);</span><br><span class="line"><span class="keyword">CREATE</span> INDEX edges_heads <span class="keyword">ON</span> edges (head_vertex);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>和 #12, #13 建立的 Index 類似，Property graph model  可以快速找到和各個 Vertex 的 Outgoing &#x2F; Ingoing edges。 </p>
+</li>
+<li><p><code>label</code> 可以用來表達不同的關係，如上圖 Social graph 的 <code>born_in</code>, <code>lives_in</code>, <code>within</code>, <code>married</code>。</p>
+</li>
+<li><p>有很多關係是傳統 Relational schema 難以表達的，例如不同國家對於行政區的劃分個有規則、Lucy 現在住在 City 但出生於 State。</p>
+</li>
+<li><p>Graphs are good for evolvability.</p>
+</li>
+</ul>
+<h3 id="The-Cypher-Query-Language"><a href="#The-Cypher-Query-Language" class="headerlink" title="The Cypher Query Language"></a>The Cypher Query Language</h3><p>Cypher 是用來查詢 Property graphs 的 Declarative query language。</p>
+<ul>
+<li><p>Cypher query to add data:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CREATE</span><br><span class="line">  (NAmerica:Location &#123;name:&#x27;North America&#x27;, type:&#x27;continent&#x27;&#125;),</span><br><span class="line">  (USA:Location &#123;name:&#x27;United States&#x27;, type:&#x27;country&#x27;&#125;),</span><br><span class="line">  (Idaho:Location &#123;name:&#x27;Idaho&#x27;, type:&#x27;state&#x27;&#125;),</span><br><span class="line">  (Lucy:Person &#123;name:&#x27;Lucy&#x27;&#125;),</span><br><span class="line">  (Idaho) -[:WITHIN]-&gt;  (USA)  -[:WITHIN]-&gt; (NAmerica),</span><br><span class="line">  (Lucy)  -[:BORN_IN]-&gt; (Idaho)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Cypher query to get data matching conditions:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MATCH</span><br><span class="line">  (person) -[:BORN_IN]-&gt;  () -[:WITHIN*0..]-&gt; (us:Location &#123;name:&#x27;United States&#x27;&#125;),</span><br><span class="line">  (person) -[:LIVES_IN]-&gt; () -[:WITHIN*0..]-&gt; (eu:Location &#123;name:&#x27;Europe&#x27;&#125;)</span><br><span class="line">  RETURN person.name</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>用類似 Regular expersion 的方式 Match (WITHIN 出現 0 或多次)。</li>
+</ul>
+</li>
+<li><p>和一般的 Declarative language 相同，我們不需要擔心執行的實作細節。</p>
+</li>
+</ul>
+<h3 id="Graph-Queries-in-SQL"><a href="#Graph-Queries-in-SQL" class="headerlink" title="Graph Queries in SQL"></a>Graph Queries in SQL</h3><p>之前有用 Relational schema 來表示 Graph data 的 Vertex 和 Edge，換言之我們可以將 Graph data 以 Relational model 儲存，對於前面 Cypher 的 <code>:WITHIN*0..</code>，SQL 可以用 <em>recursive common table expressions</em> (<code>WITH RECURSIVE</code>) 來實現：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> <span class="keyword">RECURSIVE</span></span><br><span class="line">  <span class="comment">-- in_usa is the set of vertex IDs of all locations within the United States</span></span><br><span class="line">  in_usa(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">      <span class="keyword">SELECT</span> vertex_id <span class="keyword">FROM</span> vertices <span class="keyword">WHERE</span> properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span> <span class="operator">=</span> <span class="string">&#x27;United States&#x27;</span></span><br><span class="line">    <span class="keyword">UNION</span></span><br><span class="line">      <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">        <span class="keyword">JOIN</span> in_usa <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_usa.vertex_id</span><br><span class="line">        <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;within&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">  <span class="comment">-- in_europe is the set of vertex IDs of all locations within Europe</span></span><br><span class="line">  in_europe(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">      <span class="keyword">SELECT</span> vertex_id <span class="keyword">FROM</span> vertices <span class="keyword">WHERE</span> properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span> <span class="operator">=</span> <span class="string">&#x27;Europe&#x27;</span></span><br><span class="line">    <span class="keyword">UNION</span></span><br><span class="line">      <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">        <span class="keyword">JOIN</span> in_europe <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_europe.vertex_id</span><br><span class="line">        <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;within&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">  <span class="comment">-- born_in_usa is the set of vertex IDs of all people born in the US</span></span><br><span class="line">  born_in_usa(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">      <span class="keyword">JOIN</span> in_usa <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_usa.vertex_id</span><br><span class="line">      <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;born_in&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">	<span class="comment">-- lives_in_europe is the set of vertex IDs of all people living in Europe</span></span><br><span class="line">  lives_in_europe(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">      <span class="keyword">JOIN</span> in_europe <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_europe.vertex_id</span><br><span class="line">      <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;lives_in&#x27;</span></span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> vertices.properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span></span><br><span class="line"><span class="keyword">FROM</span> vertices</span><br><span class="line"><span class="comment">-- join to find those people who were both born in the US *and* live in Europe JOIN born_in_usa ON vertices.vertex_id = born_in_usa.vertex_id</span></span><br><span class="line"><span class="keyword">JOIN</span> lives_in_europe <span class="keyword">ON</span> vertices.vertex_id <span class="operator">=</span> lives_in_europe.vertex_id;</span><br></pre></td></tr></table></figure>
+
+<p>Cypher 只需要 4 行即可完成的 Query 以 SQL 實現需要 30 行左右，只能說不同 Data model 有各自個 Use case，也更顯得 Application 根據需求挑選適合的 Data model 的重要性。</p>
+<h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>We have different systems for different purposes, not a single one-size-fits-all solution:</p>
+<ul>
+<li><p>Relational model</p>
+<ul>
+<li>Targeting use case: many-to-many relationships (while graph maybe more suitable when data is highly connected).</li>
+<li>Explicit schema, which enforces the structure during write operations.</li>
+</ul>
+</li>
+<li><p>NoSQL</p>
+<ul>
+<li>Document model:<ul>
+<li>Targeting use case: data comes in self-contained document.</li>
+</ul>
+</li>
+<li>Graph model:<ul>
+<li>Targeting use case: anything is potentially related to everything.</li>
+</ul>
+</li>
+<li>Typically implicit schema, where the structure is handled during read operations.<ul>
+<li>Easier to adapt applications to changing requirements.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Full-text search</p>
+<ul>
+<li>Unmentioned in this chapter. Search indexes would be touched in Chapter 3 and Part III.</li>
+</ul>
+</li>
+</ul>
+<p>Each data model comes with its own query language or framework:</p>
+<ul>
+<li>SQL, MapReduce, MongoDB’s aggregation pipeline, Cypher, SPARQL, and Datalog.</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Reading-notes/" rel="tag"># Reading notes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/09/16/pgsql-physical-replication/" rel="prev" title="PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication">
+      <i class="fa fa-chevron-left"></i> PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Data-Model"><span class="nav-number">1.</span> <span class="nav-text">Data Model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Relational-Model-Versus-Document-Model"><span class="nav-number">2.</span> <span class="nav-text">Relational Model Versus Document Model</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#SQL-and-NoSQL"><span class="nav-number">2.1.</span> <span class="nav-text">SQL and NoSQL</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#The-Object-Relational-Mismatch"><span class="nav-number">2.2.</span> <span class="nav-text">The Object-Relational Mismatch</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Many-to-One-and-Many-to-Many-Relationships"><span class="nav-number">2.3.</span> <span class="nav-text">Many-to-One and Many-to-Many Relationships</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Relational-Versus-Document-Databases-Today"><span class="nav-number">2.4.</span> <span class="nav-text">Relational Versus Document Databases Today</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Schema-Flexibility-in-the-Document-Model"><span class="nav-number">2.4.1.</span> <span class="nav-text">Schema Flexibility in the Document Model</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Data-Locality-for-Queries"><span class="nav-number">2.4.2.</span> <span class="nav-text">Data Locality for Queries</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Query-Languages-for-Data"><span class="nav-number">3.</span> <span class="nav-text">Query Languages for Data</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Graph-Like-Data-Models"><span class="nav-number">4.</span> <span class="nav-text">Graph-Like Data Models</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Property-Graphs"><span class="nav-number">4.1.</span> <span class="nav-text">Property Graphs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#The-Cypher-Query-Language"><span class="nav-number">4.2.</span> <span class="nav-text">The Cypher Query Language</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Graph-Queries-in-SQL"><span class="nav-number">4.3.</span> <span class="nav-text">Graph Queries in SQL</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Summary"><span class="nav-number">5.</span> <span class="nav-text">Summary</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tomu Lee"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Tomu Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tomuli423" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tomuli423" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yu-jung-lee-475457222" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yu-jung-lee-475457222" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:leetomu423@gmail.com" title="Email → mailto:leetomu423@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tomu Lee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

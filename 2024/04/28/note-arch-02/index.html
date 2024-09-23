@@ -27,13 +27,13 @@
 <meta property="og:site_name" content="Tomu&#39;s Blog">
 <meta property="og:description" content="之前參加的讀書會選書，當時讀書會進行到後期的時候，參與的大家都對這本書有類似的反饋：書中敘述的內容因為沒有實例佐證所以有些內容較無法想像。那時候我認為等開發經驗多累積一點再回來看這本書應該會有較深的感受，再加上書中前面的內容其實沒有上面提到的問題，個人覺得對初探架構的自己來說是有幫助的，因此打算至少整理一下到 SOLID Principles 前的讀書筆記。">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://tomuli.cc/note-arch-02-segregation.png">
+<meta property="og:image" content="https://tomuli.cc/2024/04/28/note-arch-02/note-arch-02-segregation.png">
 <meta property="article:published_time" content="2024-04-28T14:58:00.000Z">
-<meta property="article:modified_time" content="2024-04-28T17:03:53.533Z">
+<meta property="article:modified_time" content="2024-09-16T15:37:33.386Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="Reading notes">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://tomuli.cc/note-arch-02-segregation.png">
+<meta name="twitter:image" content="https://tomuli.cc/2024/04/28/note-arch-02/note-arch-02-segregation.png">
 
 <link rel="canonical" href="https://tomuli.cc/2024/04/28/note-arch-02/">
 
@@ -198,7 +198,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2024-04-29 01:03:53" itemprop="dateModified" datetime="2024-04-29T01:03:53+08:00">2024-04-29</time>
+                <time title="Modified: 2024-09-16 23:37:33" itemprop="dateModified" datetime="2024-09-16T23:37:33+08:00">2024-09-16</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -319,7 +319,7 @@
 </blockquote>
 <h3 id="Immutablity-and-Architecture"><a href="#Immutablity-and-Architecture" class="headerlink" title="Immutablity and Architecture"></a>Immutablity and Architecture</h3><p>之所以 Architect 需要考慮變數是否 Mutable，是因為所有的 Race conditions, Deadlock conditions 和 Concurrent update problems 都和 Mutable variable 有關。換言之，一旦可以保證 Immutablity，就不需要擔心 Concurrency applications 可能遇到的上述問題。不過實務上資源是有限的，要讓整個 Application 都做到符合這個特性不太可行，通常需要作一些妥協。</p>
 <p>比較常見的方式是將 Application 拆成 Mutable 和 Immutable 兩種 Component，如下圖：</p>
-<p><img src="/note-arch-02-segregation.png" alt="note-arch-02-segregation"></p>
+<p><img src="/2024/04/28/note-arch-02/note-arch-02-segregation.png" alt="note-arch-02-segregation"></p>
 <p>Immutable component 中不會對其狀態&#x2F;變數進行修改，也因此 Architect 應該要努力讓大部分的邏輯都歸於這類 Component 中。至於 Mutable component 則會對其狀態&#x2F;變數進行修改，也因此常會透過如 Transactional memory 的概念來保護其可變的狀態&#x2F;變數。</p>
 <h3 id="Example-Event-Sourcing"><a href="#Example-Event-Sourcing" class="headerlink" title="Example: Event Sourcing"></a>Example: Event Sourcing</h3><p>雖然上面提到實務上需要作一些妥協，不過隨著 Storage 和 Processor 的進步，能做到 Immutable state 的比重也會越來越多，書中以銀行帳戶餘額為例來介紹這樣的 Application：</p>
 <ul>
@@ -444,7 +444,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">6</span>
+          <span class="site-state-item-count">7</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
