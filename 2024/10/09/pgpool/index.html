@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tomuli.cc","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","width":350,"display":"always","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="藉由前文介紹的 PostgreSQL Physical Replication，我們得以將單一 PostgreSQL server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 PostgreSQL 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PostgreSQL Cluster 功能開發 - PgPool II">
+<meta property="og:url" content="https://tomuli.cc/2024/10/09/pgpool/index.html">
+<meta property="og:site_name" content="Tomu&#39;s Blog">
+<meta property="og:description" content="藉由前文介紹的 PostgreSQL Physical Replication，我們得以將單一 PostgreSQL server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 PostgreSQL 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2024-10-09T14:56:25.000Z">
+<meta property="article:modified_time" content="2024-10-09T14:56:25.791Z">
+<meta property="article:author" content="Tomu Lee">
+<meta property="article:tag" content="PostgreSQL">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://tomuli.cc/2024/10/09/pgpool/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>PostgreSQL Cluster 功能開發 - PgPool II | Tomu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tomu's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://tomuli.cc/2024/10/09/pgpool/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Tomu Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tomu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PostgreSQL Cluster 功能開發 - PgPool II
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-10-09 22:56:25" itemprop="dateCreated datePublished" datetime="2024-10-09T22:56:25+08:00">2024-10-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/PostgreSQL/" itemprop="url" rel="index"><span itemprop="name">PostgreSQL</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>藉由<a href="https://tomuli.cc/2024/09/16/pgsql-physical-replication/">前文</a>介紹的 <em>PostgreSQL Physical Replication</em>，我們得以將單一 <em>PostgreSQL</em> server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 <em>PostgreSQL</em> 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy 來達到這些功能。這篇文章將介紹其中一種功能較完善的選擇 — <em>Pgpool-II</em> 以及其簡易配置。</p>
+<span id="more"></span>
+
+<blockquote>
+<p>以下內容、圖片與 <em>Pgpool-II</em> 配置大多參考 <em>Pgpool-II</em> <a target="_blank" rel="noopener" href="https://www.pgpool.net/docs/latest/en/html/index.html">官方文件</a></p>
+</blockquote>
+<h2 id="What-is-Pgpool-II-What-Features-Does-It-Support"><a href="#What-is-Pgpool-II-What-Features-Does-It-Support" class="headerlink" title="What is Pgpool-II? What Features Does It Support?"></a>What is Pgpool-II? What Features Does It Support?</h2><p><em>Pgpool-II</em> 管理一組 <em>PostgreSQL</em> server (Pool of <em>PostgreSQL</em> servers)，如前文所述可以視為一個中介層，即對 Application 來說他就是 <em>PostgreSQL</em> server，對 Server 來說則視 <em>Pgpool-II</em> 為 Client：</p>
+<pre class="mermaid">flowchart TD
+    App["Application"] --> Pgpool["Pgpool-II"]
+
+    Pgpool --> cluster
+
+subgraph cluster["PostgreSQL Servers "]
+    direction LR
+    Master -- "Physical Replication" --> Slaves
+end</pre>
+
+<p>其所支援的功能大致條列如下:</p>
+<ul>
+<li>Performance<ul>
+<li>Load balancing: 將 Read queries 分配至多個 Servers (<a target="_blank" rel="noopener" href="https://www.pgpool.net/docs/latest/en/html/runtime-config-load-balancing.html#RUNTIME-CONFIG-WRITING-QUERIES-MAY-AFFECT-LOAD-BALANCING">Write queries</a> 只能導至 Primary server)。</li>
+<li>Connection pooling: 類似 <em>pgbouncer</em>, <em>pgcat</em>，Reuse 已建立的連線來減少連線開銷。</li>
+<li>In-memory query cache: Cache <code>SELECT</code> Query 的結果來加快重複查詢速度。</li>
+</ul>
+</li>
+<li>High availability<ul>
+<li>For <em>PostgresQL</em> databases<ul>
+<li>Replication: <em>Pgpool-II</em>-II 也有支援自己的 Replication，不過一般還是會建議用 PostgreSQL 原生的 Physical(Streaming) replication，詳見上一篇介紹。</li>
+<li>Automatic failover: Primary server 故障時將其自動轉移至其他 Standby server，繼續提供服務。</li>
+<li>Online Recovery: 將 Detached Server 重新以 Standby server 的身分 Attach 回來。</li>
+</ul>
+</li>
+<li>For <em>Pgpool-II</em><ul>
+<li>Watchdog: Coordination service，協調多個 <em>Pgpool-II</em> 節點，進行 Failure detection，避免 Single point of failure 和 Split brain 等現象。當目前的 Active <em>Pgpool-II</em> 故障時，Standby <em>Pgpool-II</em> 會被 Promoted 為 Active 然後接管 Virtual IP，讓上層 Application 連線。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="Setup-Steps-and-Configuration"><a href="#Setup-Steps-and-Configuration" class="headerlink" title="Setup Steps and Configuration"></a>Setup Steps and Configuration</h2><p>從上一節可以看出 <em>Pgpool-II</em> 支援的功能相當豐富，這一節我將介紹其中關於 Load balancing 和 Automatic failover 大致的設定流程。</p>
+<blockquote>
+<p>以下的 Command 和 Configuration 都僅供參考，請依實際環境與需求調整。</p>
+</blockquote>
+<h3 id="General-Setup"><a href="#General-Setup" class="headerlink" title="General Setup"></a>General Setup</h3><ol>
+<li>Setup <em>PostgreSQL physical replication</em>. For detailed setup instruction, refer to the example in the last <a href="https://tomuli.cc/2024/09/16/pgsql-physical-replication/">article</a>.</li>
+<li>Create role for replication and grant permission to show more information in <code>SHOW POOL NODES</code> command result: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -tA -c <span class="string">&quot;CREATE ROLE replication WITH LOGIN REPLICATION;&quot;</span></span><br><span class="line">psql -U postgres -tA -c <span class="string">&quot;GRANT pg_monitor TO replication;&quot;</span></span><br></pre></td></tr></table></figure></li>
+<li>Setup general configuration in <em>pgpool.conf</em>: <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">backend_clustering_mode = &#x27;streaming_replication&#x27;</span><br><span class="line">listen_addresses = &#x27;*&#x27;</span><br><span class="line">port = 9999</span><br><span class="line">sr_check_user = &#x27;replication&#x27; # stream replication check for detecting replication delay</span><br><span class="line">sr_check_period = 5</span><br><span class="line">health_check_user = &#x27;replication&#x27; # health check for failover</span><br><span class="line">health_check_period = 10</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="Load-Balancing"><a href="#Load-Balancing" class="headerlink" title="Load Balancing"></a>Load Balancing</h3><ol>
+<li>Setup backend settings in <em>pgpool.conf</em>: <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"># backend_application_name*: to show more information in `SHOW POOL NODES` command result</span><br><span class="line">backend_hostname0 = &#x27;$&#123;PRIMARY_IP&#125;&#x27;</span><br><span class="line">backend_port0 = 5432</span><br><span class="line">backend_weight0 = 1</span><br><span class="line">backend_data_directory0 = &#x27;/var/lib/pgsql/data&#x27;</span><br><span class="line">backend_application_name0 = &#x27;primary&#x27;</span><br><span class="line">backend_flag0 = &#x27;ALLOW_TO_FAILOVER&#x27;</span><br><span class="line">backend_hostname1 = &#x27;$&#123;REPLICA_1_IP&#125;&#x27;</span><br><span class="line">backend_port1 = 5432</span><br><span class="line">backend_weight1 = 1</span><br><span class="line">backend_data_directory1 = &#x27;/var/lib/pgsql/data&#x27;</span><br><span class="line">backend_application_name1 = &#x27;replica_1&#x27;</span><br><span class="line">backend_flag1 = &#x27;ALLOW_TO_FAILOVER&#x27;</span><br><span class="line">backend_hostname2 = &#x27;$&#123;REPLICA_2_IP&#125;&#x27;</span><br><span class="line">backend_port1 = 5432</span><br><span class="line">backend_weight1 = 1</span><br><span class="line">backend_data_directory1 = &#x27;/var/lib/pgsql/data&#x27;</span><br><span class="line">backend_application_name1 = &#x27;replica_2&#x27;</span><br><span class="line">backend_flag1 = &#x27;ALLOW_TO_FAILOVER&#x27;</span><br></pre></td></tr></table></figure></li>
+<li>Start PgPool-II: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># -n: do not run in daemon mode</span></span><br><span class="line">sudo -u postgres pgpool -n -f <span class="variable">$&#123;LOCATION_OF_PGPOOL_CONF&#125;</span> &amp;</span><br><span class="line"><span class="comment"># As for how to stop:</span></span><br><span class="line">sudo -u postgres pgpool -f <span class="variable">$&#123;LOCATION_OF_PGPOOL_CONF&#125;</span> stop</span><br></pre></td></tr></table></figure></li>
+<li>Monitor: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -U postgres -p 9999 -c <span class="string">&quot;SHOW POOL NODES;&quot;</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<h3 id="Automatic-Failover"><a href="#Automatic-Failover" class="headerlink" title="Automatic Failover"></a>Automatic Failover</h3><p>Setup <a target="_blank" rel="noopener" href="https://www.pgpool.net/docs/latest/en/html/runtime-config-failover.html#GUC-FAILOVER-COMMAND"><code>failover_command</code></a> and <a target="_blank" rel="noopener" href="https://www.pgpool.net/docs/latest/en/html/runtime-config-failover.html#GUC-FOLLOW-PRIMARY-COMMAND"><code>follow_primary_command</code></a> in <em>pgpool.conf</em> (For the meaning of the command options below, please refer to the corresponding configuration link):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">failover_command = &#x27;/etc/pgpool-II/failover.sh %d %h %p %D %m %H %M %P %r %R %N %S&#x27;</span><br><span class="line">follow_primary_command = &#x27;/etc/pgpool-II/follow_primary.sh %d %h %p %D %m %H %M %P %r %R&#x27;</span><br></pre></td></tr></table></figure>
+
+<p>General steps of the scripts are described below. Please refer to <a target="_blank" rel="noopener" href="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/failover.sh.sample;hb=refs/heads/V4_5_STABLE">failover.sh.sample</a> and <a target="_blank" rel="noopener" href="https://git.postgresql.org/gitweb/?p=pgpool2.git;a=blob_plain;f=src/sample/scripts/follow_primary.sh.sample;hb=refs/heads/V4_5_STABLE">follow_primary.sh.sample</a> for sample scripts.</p>
+<ul>
+<li><code>failover_command</code>: Triggered when a backend node get detached.<ol>
+<li>If there’s no new main node (<code>%m</code>) anymore, skip failover.</li>
+<li>If the detached node is a standby node (<code>%d</code> !&#x3D; <code>%P</code>):<ul>
+<li>Drop the replication slot for the detached standby node.  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">OLD_PRIMARY_NODE_HOST=<span class="string">&quot;<span class="variable">$&#123;11&#125;</span>&quot;</span> <span class="comment"># %N: old primary node hostname</span></span><br><span class="line">OLD_PRIMARY_NODE_PORT=<span class="string">&quot;<span class="variable">$&#123;12&#125;</span>&quot;</span> <span class="comment"># %S: old primary node port number</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># REPLICA_SLOT_NAME can be composed of the self-defined slot name and $2 (%h: failed node hostname)</span></span><br><span class="line">psql -U postgres -h <span class="variable">$&#123;OLD_PRIMARY_NODE_HOST&#125;</span> -p <span class="variable">$&#123;OLD_PRIMARY_NODE_PORT&#125;</span> -c <span class="string">&quot;SELECT pg_drop_replication_slot(&#x27;<span class="variable">$&#123;REPLICA_SLOT_NAME&#125;</span>&#x27;);&quot;</span></span><br></pre></td></tr></table></figure></li>
+<li>Skip failover.</li>
+</ul>
+</li>
+<li>Otherwise, the detached node is primary node. We therefore promote the selected standby node as new primary node: <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># The following command should be executed on the standby node via SSH or other remote access methods.</span></span><br><span class="line">NEW_MAIN_NODE_PGDATA=<span class="string">&quot;<span class="variable">$&#123;10&#125;</span>&quot;</span> <span class="comment"># %R: new main database cluster path</span></span><br><span class="line">pg_ctl -D <span class="variable">$&#123;NEW_MAIN_NODE_PGDATA&#125;</span> -w promote</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><code>follow_primary_command</code>: Executed on each standby node after <code>failover_command</code> to synchronize the standby node with the new primary node.<ol>
+<li>Check the connection status of the standby node. Skip follow primary command if the node is not running. <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">NODE_HOST=<span class="string">&quot;<span class="variable">$2</span>&quot;</span> <span class="comment"># %h: hostname</span></span><br><span class="line">NODE_PORT=<span class="string">&quot;<span class="variable">$3</span>&quot;</span> <span class="comment"># %p: port number </span></span><br><span class="line">pg_isready -U postgres -h <span class="variable">$&#123;NODE_HOST&#125;</span> -p <span class="variable">$&#123;NODE_PORT&#125;</span></span><br></pre></td></tr></table></figure></li>
+<li>Synchronize the standby node with the new primary node via <em>pg_rewind</em>.<ol>
+<li>Checkpint on the new primary node before running <em>pg_rewind</em>.</li>
+<li>Create new replication slot for this standby node.</li>
+<li>Run <em>pg_rewind</em>.</li>
+</ol>
+</li>
+<li>Try <em>pg_basebackup</em> if <em>pg_rewind</em> failed.</li>
+<li>If the synchronization succeeded, attach this node back to <em>Pgpool-II</em>. Otherwise, drop the replication slot we just created.</li>
+</ol>
+</li>
+</ul>
+<h2 id="Issues-about-the-Integration-of-Pgpool-II"><a href="#Issues-about-the-Integration-of-Pgpool-II" class="headerlink" title="Issues about the Integration of Pgpool-II"></a>Issues about the Integration of <em>Pgpool-II</em></h2><p>至此我們整合 <em>Pgpool-II</em> 為 <em>PostgreSQL physical replication</em> servers 的 Proxy，並且支援 Load balancing, read&#x2F;write splitting, automatic failover 等功能。關於其他 <em>Pgpool-II</em> 支援功能的設定方式可以參考官方文件與其中的幾個<a target="_blank" rel="noopener" href="https://www.pgpool.net/docs/latest/en/html/example-configs.html">範例</a>。</p>
+<p>在文章的最後，我們接續<a href="https://tomuli.cc/2024/09/16/pgsql-physical-replication/">前文</a>最後的討論，延伸討論整合 <em>Pgpool-II</em> 後實務上可能會遇到的問題。</p>
+<h3 id="Network-Latency"><a href="#Network-Latency" class="headerlink" title="Network Latency"></a>Network Latency</h3><p>前文最後的討論就有提到 Performance 的部分需要考慮 Network latency ，尤其是如果 Production workload 都是 Light weight query 或是 Buffer cache 常常命中的情境，可能會造成 Scaled-out solution 的效能反而較差，在加入 <em>Pgpool-II</em> 後影響更為顯著。以一個 Query 從 Client 送至 Server 的 Lifecycle 來說明:</p>
+<ul>
+<li>Send query to PostgreSQL directly<ol>
+<li>send a query string to PostgreSQL</li>
+<li>process the query on PostgreSQL</li>
+<li>return the query result</li>
+</ol>
+</li>
+<li>Send query to Pgpool-II<ol>
+<li>send a query string to Pgpool-II</li>
+<li>parse the query on Pgpool-II</li>
+<li>send a query string to PostgreSQL</li>
+<li>process the query on PostgreSQL</li>
+<li>return the query result to Pgpool-II</li>
+<li>return the query result to client</li>
+</ol>
+</li>
+</ul>
+<p>可以觀察送至 <em>Pgpool-II</em> 的 Case，其明顯多了幾段 Process communitcation 的開銷，也會使 Network latency 的影響更為顯著。當然在實務上的 Workload 應該會更加複雜，因此通常 Scaled-out solution 還是會有其效益。</p>
+<h3 id="Connection-Pooling-Pgpool-II-vs-Pgbouncer"><a href="#Connection-Pooling-Pgpool-II-vs-Pgbouncer" class="headerlink" title="Connection Pooling: Pgpool-II vs Pgbouncer"></a>Connection Pooling: <em>Pgpool-II</em> vs <em>Pgbouncer</em></h3><p>Connection pooling 是指維護資料庫連線的快取 (Pool)，在有相同屬性的 (User, database, etc.) 請求進來時重複使用他們，以降低反覆連線的開銷，以 <em>PostgreSQL</em> 來說最有名的就是 <em>Pgbouncer</em>。</p>
+<p>上文中有提到 <em>Pgpool-II</em> 的功能完善，對 Connection pooling 也有支援，雖然沒有提及設定方式，不過 <em>Pgpool-II</em> 其實預設就有開啟 Connection pooling 的功能，可以再調整 <code>connection_cache</code>, <code>max_pool</code> 等參數來控制功能。</p>
+<p>不過實際嘗試後會發現 <em>Pgpool-II</em> 和 <em>Pgbouncer</em> 的 Connection pooling 機制上有所不同，我們首先介紹 <em>Pgpool-II</em> 的大致架構：</p>
+<pre class="mermaid">flowchart TD
+    parent["Pgpool-II parent"] -- Fork --> children
+
+subgraph children["Preforked processes"]
+    direction LR
+    child1["Pgpool-II child"]
+    child2["Pgpool-II child"]
+    child3["Pgpool-II child"]
+end
+    
+        client["SQL Client"] -- Query -->children</pre>
+
+<p>即 <em>Pgpool-II</em> 會 Prefork <code>num_init_children</code> (預設 32) 數量的 Process，並藉由這些 Child process 來 Serve clients。而上面提到的 Connection pooling 機制不同詳見比較如下：</p>
+<ul>
+<li><p><em>PgBouncer</em>: the connection pool is shared between all clients.</p>
+</li>
+<li><p><em>Pgpool-II</em>: the connection pool is shared in each child process. However, we <strong>cannot</strong> control which child process a client connects to.</p>
+</li>
+</ul>
+<p>換言之，<em>Pgpool-II</em> 有可能因為連線的 Child process 不同而導致 Connection cache 沒有命中。這點在 Client 的連線屬性  (User, database, etc.) 都相同時沒有影響，但反之如果 Database 會被多個不同的 Application 連線，則需要考慮使用別的 Solution，例如關掉 <em>Pgpool-II</em> 的 Connection pool，每個 Application 自己架 <em>Pgbouncer</em>。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/PostgreSQL/" rel="tag"># PostgreSQL</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/09/23/note-ddia-02/" rel="prev" title="讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages">
+      <i class="fa fa-chevron-left"></i> 讀書筆記｜DDIA｜Chapter 2. Data Models and Query Languages
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#What-is-Pgpool-II-What-Features-Does-It-Support"><span class="nav-number">1.</span> <span class="nav-text">What is Pgpool-II? What Features Does It Support?</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Setup-Steps-and-Configuration"><span class="nav-number">2.</span> <span class="nav-text">Setup Steps and Configuration</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#General-Setup"><span class="nav-number">2.1.</span> <span class="nav-text">General Setup</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Load-Balancing"><span class="nav-number">2.2.</span> <span class="nav-text">Load Balancing</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Automatic-Failover"><span class="nav-number">2.3.</span> <span class="nav-text">Automatic Failover</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Issues-about-the-Integration-of-Pgpool-II"><span class="nav-number">3.</span> <span class="nav-text">Issues about the Integration of Pgpool-II</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Network-Latency"><span class="nav-number">3.1.</span> <span class="nav-text">Network Latency</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Connection-Pooling-Pgpool-II-vs-Pgbouncer"><span class="nav-number">3.2.</span> <span class="nav-text">Connection Pooling: Pgpool-II vs Pgbouncer</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tomu Lee"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Tomu Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tomuli423" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tomuli423" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yu-jung-lee-475457222" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yu-jung-lee-475457222" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:leetomu423@gmail.com" title="Email → mailto:leetomu423@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tomu Lee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

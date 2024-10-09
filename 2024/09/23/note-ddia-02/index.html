@@ -30,7 +30,7 @@
 <meta property="og:image" content="https://tomuli.cc/2024/09/23/note-ddia-02/note-ddia-02-cv.png">
 <meta property="og:image" content="https://tomuli.cc/2024/09/23/note-ddia-02/note-ddia-02-graph.png">
 <meta property="article:published_time" content="2024-09-23T14:45:51.000Z">
-<meta property="article:modified_time" content="2024-09-23T14:48:21.899Z">
+<meta property="article:modified_time" content="2024-09-23T14:57:15.415Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="Reading notes">
 <meta name="twitter:card" content="summary">
@@ -193,7 +193,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2024-09-23 22:45:51 / Modified: 22:48:21" itemprop="dateCreated datePublished" datetime="2024-09-23T22:45:51+08:00">2024-09-23</time>
+              <time title="Created: 2024-09-23 22:45:51 / Modified: 22:57:15" itemprop="dateCreated datePublished" datetime="2024-09-23T22:45:51+08:00">2024-09-23</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -393,7 +393,7 @@
 <h3 id="Graph-Queries-in-SQL"><a href="#Graph-Queries-in-SQL" class="headerlink" title="Graph Queries in SQL"></a>Graph Queries in SQL</h3><p>之前有用 Relational schema 來表示 Graph data 的 Vertex 和 Edge，換言之我們可以將 Graph data 以 Relational model 儲存，對於前面 Cypher 的 <code>:WITHIN*0..</code>，SQL 可以用 <em>recursive common table expressions</em> (<code>WITH RECURSIVE</code>) 來實現：</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">WITH</span> <span class="keyword">RECURSIVE</span></span><br><span class="line">  <span class="comment">-- in_usa is the set of vertex IDs of all locations within the United States</span></span><br><span class="line">  in_usa(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">      <span class="keyword">SELECT</span> vertex_id <span class="keyword">FROM</span> vertices <span class="keyword">WHERE</span> properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span> <span class="operator">=</span> <span class="string">&#x27;United States&#x27;</span></span><br><span class="line">    <span class="keyword">UNION</span></span><br><span class="line">      <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">        <span class="keyword">JOIN</span> in_usa <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_usa.vertex_id</span><br><span class="line">        <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;within&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">  <span class="comment">-- in_europe is the set of vertex IDs of all locations within Europe</span></span><br><span class="line">  in_europe(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">      <span class="keyword">SELECT</span> vertex_id <span class="keyword">FROM</span> vertices <span class="keyword">WHERE</span> properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span> <span class="operator">=</span> <span class="string">&#x27;Europe&#x27;</span></span><br><span class="line">    <span class="keyword">UNION</span></span><br><span class="line">      <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">        <span class="keyword">JOIN</span> in_europe <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_europe.vertex_id</span><br><span class="line">        <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;within&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">  <span class="comment">-- born_in_usa is the set of vertex IDs of all people born in the US</span></span><br><span class="line">  born_in_usa(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">      <span class="keyword">JOIN</span> in_usa <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_usa.vertex_id</span><br><span class="line">      <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;born_in&#x27;</span></span><br><span class="line">  ),</span><br><span class="line">	<span class="comment">-- lives_in_europe is the set of vertex IDs of all people living in Europe</span></span><br><span class="line">  lives_in_europe(vertex_id) <span class="keyword">AS</span> (</span><br><span class="line">    <span class="keyword">SELECT</span> edges.tail_vertex <span class="keyword">FROM</span> edges</span><br><span class="line">      <span class="keyword">JOIN</span> in_europe <span class="keyword">ON</span> edges.head_vertex <span class="operator">=</span> in_europe.vertex_id</span><br><span class="line">      <span class="keyword">WHERE</span> edges.label <span class="operator">=</span> <span class="string">&#x27;lives_in&#x27;</span></span><br><span class="line">  )</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> vertices.properties<span class="operator">-</span><span class="operator">&gt;&gt;</span><span class="string">&#x27;name&#x27;</span></span><br><span class="line"><span class="keyword">FROM</span> vertices</span><br><span class="line"><span class="comment">-- join to find those people who were both born in the US *and* live in Europe JOIN born_in_usa ON vertices.vertex_id = born_in_usa.vertex_id</span></span><br><span class="line"><span class="keyword">JOIN</span> lives_in_europe <span class="keyword">ON</span> vertices.vertex_id <span class="operator">=</span> lives_in_europe.vertex_id;</span><br></pre></td></tr></table></figure>
 
-<p>Cypher 只需要 4 行即可完成的 Query 以 SQL 實現需要 30 行左右，只能說不同 Data model 有各自個 Use case，也更顯得 Application 根據需求挑選適合的 Data model 的重要性。</p>
+<p>Cypher 只需要 4 行即可完成的 Query 以 SQL 實現需要 30 行左右，只能說不同的 Data model 真的各有 Use case，Application 需要根據需求挑選適合的 Data model。</p>
 <h2 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h2><p>We have different systems for different purposes, not a single one-size-fits-all solution:</p>
 <ul>
 <li><p>Relational model</p>
@@ -449,7 +449,10 @@
     <a href="/2024/09/16/pgsql-physical-replication/" rel="prev" title="PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication">
       <i class="fa fa-chevron-left"></i> PostgreSQL Cluster 功能開發 - PostgreSQL Physical Replication
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2024/10/09/pgpool/" rel="next" title="PostgreSQL Cluster 功能開發 - PgPool II">
+      PostgreSQL Cluster 功能開發 - PgPool II <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     
@@ -524,7 +527,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">7</span>
+          <span class="site-state-item-count">8</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>

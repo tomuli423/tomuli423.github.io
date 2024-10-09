@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tomuli.cc/2024/10/09/pgpool/</loc>
+    
+    <lastmod>2024-10-09</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/2024/09/23/note-ddia-02/</loc>
     
     <lastmod>2024-09-23</lastmod>
@@ -20,18 +29,18 @@
   </url>
   
   <url>
-    <loc>https://tomuli.cc/2024/04/28/note-arch-02/</loc>
+    <loc>https://tomuli.cc/2024/04/22/maillog/</loc>
     
-    <lastmod>2024-09-16</lastmod>
+    <lastmod>2024-09-23</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
-    <loc>https://tomuli.cc/2024/04/22/maillog/</loc>
+    <loc>https://tomuli.cc/2024/04/28/note-arch-02/</loc>
     
-    <lastmod>2024-09-15</lastmod>
+    <lastmod>2024-09-16</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -94,36 +103,36 @@
 
   <url>
     <loc>https://tomuli.cc/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   
   <url>
+    <loc>https://tomuli.cc/tags/Interview/</loc>
+    <lastmod>2024-10-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/tags/Mail/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/tags/Reading-notes/</loc>
-    <lastmod>2024-09-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://tomuli.cc/tags/Interview/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/tags/PostgreSQL/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -131,29 +140,29 @@
 
   
   <url>
+    <loc>https://tomuli.cc/categories/Interview/</loc>
+    <lastmod>2024-10-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/categories/Mail/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/categories/Reading-notes/</loc>
-    <lastmod>2024-09-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://tomuli.cc/categories/Interview/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/categories/PostgreSQL/</loc>
-    <lastmod>2024-09-23</lastmod>
+    <lastmod>2024-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
