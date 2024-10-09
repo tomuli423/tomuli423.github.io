@@ -28,7 +28,7 @@
 <meta property="og:description" content="藉由前文介紹的 PostgreSQL Physical Replication，我們得以將單一 PostgreSQL server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 PostgreSQL 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-10-09T14:56:25.000Z">
-<meta property="article:modified_time" content="2024-10-09T15:06:26.023Z">
+<meta property="article:modified_time" content="2024-10-09T15:08:44.127Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="PostgreSQL">
 <meta name="twitter:card" content="summary">
@@ -190,7 +190,7 @@
               <span class="post-meta-item-text">Posted on</span>
               
 
-              <time title="Created: 2024-10-09 22:56:25 / Modified: 23:06:26" itemprop="dateCreated datePublished" datetime="2024-10-09T22:56:25+08:00">2024-10-09</time>
+              <time title="Created: 2024-10-09 22:56:25 / Modified: 23:08:44" itemprop="dateCreated datePublished" datetime="2024-10-09T22:56:25+08:00">2024-10-09</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -330,12 +330,10 @@ end
     
         client["SQL Client"] -- Query -->children</pre>
 
-<p>即 <em>Pgpool-II</em> 會 Prefork <code>num_init_children</code> (預設 32) 數量的 Process，並藉由這些 Child process 來 Serve clients。而前面提到的 Connection poolin 機制不同，詳見比較如下：</p>
+<p>即 <em>Pgpool-II</em> 會 Prefork <code>num_init_children</code> (預設 32) 數量的 Process，並藉由這些 Child process 來 Serve clients。而前面提到 <em>Pgpool-II</em> 和 <em>Pgbouncer</em> 的 Connection pooling 機制不同，詳見比較如下：</p>
 <ul>
-<li><p><em>PgBouncer</em>: the connection pool is shared between all clients.</p>
-</li>
-<li><p><em>Pgpool-II</em>: the connection pool is shared in each child process. However, we <strong>cannot</strong> control which child process a client connects to.</p>
-</li>
+<li><em>Pgpool-II</em>: the connection pool is shared in each child process. However, we <strong>cannot</strong> control which child process a client connects to.</li>
+<li><em>PgBouncer</em>: the connection pool is shared between all clients.</li>
 </ul>
 <p>換言之，<em>Pgpool-II</em> 有可能因為連線的 Child process 不同而導致 Connection cache 沒有命中。這點在 Client 的連線屬性  (User, database, etc.) 都相同時沒有影響，但反之如果 Database 會被多個不同的 Application 連線，則需要考慮使用別的 Solution，例如關掉 <em>Pgpool-II</em> 的 Connection pool，每個 Application 自己架 <em>Pgbouncer</em>。</p>
 
