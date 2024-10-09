@@ -22,13 +22,13 @@
 
   <meta name="description" content="藉由前文介紹的 PostgreSQL Physical Replication，我們得以將單一 PostgreSQL server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 PostgreSQL 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy">
 <meta property="og:type" content="article">
-<meta property="og:title" content="PostgreSQL Cluster 功能開發 - PgPool II">
+<meta property="og:title" content="PostgreSQL Cluster 功能開發 - Pgpool-II">
 <meta property="og:url" content="https://tomuli.cc/2024/10/09/pgpool/index.html">
 <meta property="og:site_name" content="Tomu&#39;s Blog">
 <meta property="og:description" content="藉由前文介紹的 PostgreSQL Physical Replication，我們得以將單一 PostgreSQL server 的資料同步至多個 Server，並且每個 Server 都能獨立處理 Read request，不過前文也有提到 PostgreSQL 原生並沒有支援 Load balancing, high availability 等功能、特性，我們需要多一層額外的 Proxy">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2024-10-09T14:56:25.000Z">
-<meta property="article:modified_time" content="2024-10-09T14:56:25.791Z">
+<meta property="article:modified_time" content="2024-10-09T15:06:26.023Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="PostgreSQL">
 <meta name="twitter:card" content="summary">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>PostgreSQL Cluster 功能開發 - PgPool II | Tomu's Blog</title>
+  <title>PostgreSQL Cluster 功能開發 - Pgpool-II | Tomu's Blog</title>
   
 
 
@@ -179,7 +179,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          PostgreSQL Cluster 功能開發 - PgPool II
+          PostgreSQL Cluster 功能開發 - Pgpool-II
         </h1>
 
         <div class="post-meta">
@@ -188,8 +188,9 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
+              
 
-              <time title="Created: 2024-10-09 22:56:25" itemprop="dateCreated datePublished" datetime="2024-10-09T22:56:25+08:00">2024-10-09</time>
+              <time title="Created: 2024-10-09 22:56:25 / Modified: 23:06:26" itemprop="dateCreated datePublished" datetime="2024-10-09T22:56:25+08:00">2024-10-09</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -329,7 +330,7 @@ end
     
         client["SQL Client"] -- Query -->children</pre>
 
-<p>即 <em>Pgpool-II</em> 會 Prefork <code>num_init_children</code> (預設 32) 數量的 Process，並藉由這些 Child process 來 Serve clients。而上面提到的 Connection pooling 機制不同詳見比較如下：</p>
+<p>即 <em>Pgpool-II</em> 會 Prefork <code>num_init_children</code> (預設 32) 數量的 Process，並藉由這些 Child process 來 Serve clients。而前面提到的 Connection poolin 機制不同，詳見比較如下：</p>
 <ul>
 <li><p><em>PgBouncer</em>: the connection pool is shared between all clients.</p>
 </li>
