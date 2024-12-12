@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 7.1.1">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"tomuli.cc","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","width":350,"display":"always","padding":18,"offset":12,"onmobile":true},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="最近這段時間差不多把 DDIA 讀過一輪，不過老實說對前面幾個章節的印象也比較模糊了XD，加上近期會參與 System Design Interview 的讀書會，初步看起來 System Design Interview 比起 DDIA 講的內容淺很多，不過還是想說把這個當成一個契機，多做幾章讀書筆記來加深與內化一下 DDIA 前幾章介紹的內容。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="讀書筆記｜DDIA｜Chapter 3. Storage and Retrieval">
+<meta property="og:url" content="https://tomuli.cc/2024/12/12/note-ddia-03/index.html">
+<meta property="og:site_name" content="Tomu&#39;s Blog">
+<meta property="og:description" content="最近這段時間差不多把 DDIA 讀過一輪，不過老實說對前面幾個章節的印象也比較模糊了XD，加上近期會參與 System Design Interview 的讀書會，初步看起來 System Design Interview 比起 DDIA 講的內容淺很多，不過還是想說把這個當成一個契機，多做幾章讀書筆記來加深與內化一下 DDIA 前幾章介紹的內容。">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://tomuli.cc/2024/12/12/note-ddia-03/note-ddia-03-hashmap.png">
+<meta property="og:image" content="https://tomuli.cc/2024/12/12/note-ddia-03/note-ddia-03-btree.png">
+<meta property="article:published_time" content="2024-12-12T15:23:10.000Z">
+<meta property="article:modified_time" content="2024-12-12T15:23:10.331Z">
+<meta property="article:author" content="Tomu Lee">
+<meta property="article:tag" content="Reading notes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tomuli.cc/2024/12/12/note-ddia-03/note-ddia-03-hashmap.png">
+
+<link rel="canonical" href="https://tomuli.cc/2024/12/12/note-ddia-03/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>讀書筆記｜DDIA｜Chapter 3. Storage and Retrieval | Tomu's Blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">Tomu's Blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/" rel="section"><i class="fa fa-user fa-fw"></i>About</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://tomuli.cc/2024/12/12/note-ddia-03/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.png">
+      <meta itemprop="name" content="Tomu Lee">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Tomu's Blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          讀書筆記｜DDIA｜Chapter 3. Storage and Retrieval
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2024-12-12 23:23:10" itemprop="dateCreated datePublished" datetime="2024-12-12T23:23:10+08:00">2024-12-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Reading-notes/" itemprop="url" rel="index"><span itemprop="name">Reading notes</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>最近這段時間差不多把 <em>DDIA</em> 讀過一輪，不過老實說對前面幾個章節的印象也比較模糊了XD，加上近期會參與 <a target="_blank" rel="noopener" href="https://www.amazon.com/System-Design-Interview-insiders-Second/dp/B08CMF2CQF"><em>System Design Interview</em></a> 的讀書會，初步看起來 <em>System Design Interview</em> 比起 <em>DDIA</em> 講的內容淺很多，不過還是想說把這個當成一個契機，多做幾章讀書筆記來加深與內化一下 <em>DDIA</em> 前幾章介紹的內容。</p>
+<span id="more"></span>
+
+<blockquote>
+<p>　本文的圖片和程式碼都來自<a target="_blank" rel="noopener" href="https://www.oreilly.com/library/view/designing-data-intensive-applications/9781491903063/">原書內容</a>。</p>
+</blockquote>
+<h2 id="Data-Structures-That-Power-Your-Database"><a href="#Data-Structures-That-Power-Your-Database" class="headerlink" title="Data Structures That Power Your Database"></a>Data Structures That Power Your Database</h2><p>為什麼身為 application developer 的我們會需要了解 database 底下的機制呢？</p>
+<ul>
+<li>We need to select a storage engine that is appropriate for application.</li>
+<li>In order to tune a storage engine to perform well on our kind of workload, we need to have a rough idea of what the storage engine is doing under the hood.</li>
+</ul>
+<p>我們從最簡單的範例開始，以下面兩個 bash function 實作一個非常簡易的 key-value store:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#!/bin/bash</span></span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="title">db_set</span></span> () &#123;</span><br><span class="line">    <span class="built_in">echo</span> <span class="string">&quot;<span class="variable">$1</span>, <span class="variable">$2</span>&quot;</span> &gt;&gt; database</span><br><span class="line">&#125;</span><br><span class="line"> </span><br><span class="line"><span class="function"><span class="title">db_get</span></span> () &#123;</span><br><span class="line">    grep <span class="string">&quot;^<span class="variable">$1</span>,&quot;</span> database | sed -e <span class="string">&quot;s/^<span class="variable">$1</span>,//&quot;</span> | <span class="built_in">tail</span> -n 1</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>簡單分析這兩隻 function:</p>
+<ul>
+<li><strong>db_set</strong>: append-only log，也是很多 database 的儲存方式， 效率佳。</li>
+<li><strong>db_get</strong>: 效率為 O(n)，並不理想。</li>
+</ul>
+<p>為了改善 <strong>db_get</strong> 的效率，我們可以會需要一些額外的 metadata 來輔助尋找 record，即 index。Index 並不影響儲存的內容，但能改善 read queries 效能，不過代價是會影響到 write queries，因此身為開發者需要 application 的 query patterns 來決定要建立哪些 index。</p>
+<h3 id="Hash-Indexes"><a href="#Hash-Indexes" class="headerlink" title="Hash Indexes"></a>Hash Indexes</h3><p>已一個 key-value store 為例，如果要改善 read queries 效能，很直覺的能想到去維護一個 key to byte offset 的 hash map，範例與說明如下：</p>
+<p><img src="/2024/12/12/note-ddia-03/note-ddia-03-hashmap.png" alt="note-ddia-03-hashmap"></p>
+<ul>
+<li>Insert&#x2F;Update: 更新 hash map (in-memory)，並將 key-value append 至 log-structured file (DIsk) ，越近的 record 越優先 。</li>
+<li>Get: 先透過 hash map 拿到 offset，再來就能透過一個 disk seek 或從 filesystem cache 中拿到資料。</li>
+<li>適用於 key 數量不多 (需要 in-memory map)，但需要頻繁更新 value 的 workload。</li>
+<li>此即 <em>Bitcask</em> 的實作方式。</li>
+</ul>
+<p>另外，為了避免一個 log file 無限增長，可以將其分成多個 segment，寫滿一個就開始下一個，每個 segment 維護一個上述的 hash map，get data 時則由近而遠查詢 key 有沒有在 map 裡。這種作法的好處是可以設計一個 background task 對每個 segment 進行 compaction，以及將 compacted segments 再次 merge 合為新的 segment，並且只要讓 client 的 read&#x2F;write queries 對 old segments 操作即可不受此 background task 影響，其實作上有一些考量：</p>
+<ul>
+<li>File format: binary fomrat is better.</li>
+<li>Handle Deletion: add tombstone (deletion) record.</li>
+<li>Crash recovery: taking snapshot of each segment’s hash map avoid the mapping restore process from loading the entire segments.</li>
+<li>Data corruption: data checksum to detect corruption.</li>
+<li>Concurrency: one-writer thread for append-only file; read concurrently by multiple threads.</li>
+</ul>
+<p>至此我們可以了解用這種 append-only logs 實作 data store 的好處：</p>
+<ul>
+<li>Sequential writes are much faster than random writes.</li>
+<li>Easier concurrency control and crash recovery.</li>
+<li>Merging old segments avoids file fragmentation.</li>
+</ul>
+<p>但同時也有 hash table 的大小需要 fit in memory，以及 range query 效率差等限制。</p>
+<h3 id="SSTables-and-LSM-Trees"><a href="#SSTables-and-LSM-Trees" class="headerlink" title="SSTables and LSM-Trees"></a>SSTables and LSM-Trees</h3><p>前述方式的每個 segment 中，由於是 append-only，key-value pairs 的排序只和寫入的時間有關。<em>SSTable (Sorted String Table)</em> 則不然，會將 key-value pairs 以 key 來進行排序，每個 key 是唯一的，並且在經過 compaction 的 merged segment 中也會維持相同特性。SSTable 與前述的 log segments with hash indexes 比起來好處如下：</p>
+<ul>
+<li>Easier compaction and merge (with sorted segments), even if the files are bigger than available memory.</li>
+<li>Since it’s sorted, no longer need to keep all the keys with offset in memory: sparse index in memory is enough to get the offset (based on existed indexes + scan).</li>
+</ul>
+<p>至於 SSTable 的建構與維護，可以參考以下流程：</p>
+<ul>
+<li>Maintain a sorted structure in memory, called <em>memtable</em> (while on disk in possible like B-Trees, in-memory is easier).</li>
+<li>Simply add the written record to the memtable.</li>
+<li>When the memtable is bigger than threshold (few MB), write it out to disk as a SSTable file. (In the SSTable file, the key-value pairs are also sorted)</li>
+<li>To serve a read request, find the key in the following order: memtable, most recent on-disk segment, then the next-older one, etc.</li>
+<li>Run a merging and compaction process in the background to combine segment files from time to time.</li>
+</ul>
+<p>上述方式有一個顯著的缺點：在 process crash 時會丟失 memtable 中的 records。可以額外維護一個和前一小節一樣的 append-only log file on disk，作為 crash 之後 recovery 的依據，並且只要 memtable flush 到 disk 後，該 log file 就可以移除。</p>
+<p>這樣的 indexing structure 在早期也可以被稱為 <em>LSM-Tree (Log-structued Merge-Tree)<em>，因此 LSM storage engine 即是基於 SSTable 概念實作，如 <em>LevelDB</em>, <em>RocksDB</em>，</em>Cassandra</em> 和 <em>HBase</em> 中也有用到類似的 Storage engine，<em>Lucene</em> 也是用類似方式存 term dictionary (key: a word, value: posting list containing the word)。 </p>
+<p>另外，SSTables 的 compaction 和 merging 的策略主要有兩種：</p>
+<ul>
+<li>sized-tiered<ul>
+<li>Newer, smaller SSTables are merged into older, larger SSTables.</li>
+<li>HBase, Cassandra.</li>
+</ul>
+</li>
+<li>leveled-tiered: <ul>
+<li>Split key range into smaller SSTables, older data is moved into separate <strong>levels</strong>.</li>
+<li>Less disk space is necessary.</li>
+<li>LevelDB, RocksDB, Cassandra.</li>
+</ul>
+</li>
+</ul>
+<p>LSM-tree 也有效能較差的 Case，例如搜尋不存在的 key 仍需找遍 memtable 和所有 segment files，這部分可以用 <em>Bloom filters</em> 改善 (可能 false positive，但不可能 false negative，換言之 true 表示可能存在，false 表示絕不存在)，不過優點也不少：</p>
+<ul>
+<li>大小不限於 RAM。</li>
+<li>由於存的是 sorted data，range query 的效能很好。</li>
+<li>sequential dIsk write，write throughput 高。</li>
+</ul>
+<h3 id="B-Trees"><a href="#B-Trees" class="headerlink" title="B-Trees"></a>B-Trees</h3><p>長久以來最為廣泛使用的 index，可稱為 standard index implementation，其特性如下：</p>
+<ul>
+<li><p>和 SSTables 相同，會保持 key-value pairs sorted，因此尋找特定 key 還有 range query 的效能良好。</p>
+</li>
+<li><p>儲存單位的 page 是固定大小的 block (通常是 4KB)，這和大小不定的 segment 非常不同，其結構可以參考下圖：</p>
+<p><img src="/2024/12/12/note-ddia-03/note-ddia-03-btree.png" alt="note-ddia-03-btree"></p>
+</li>
+</ul>
+<p>參考上圖，B-tree 中的每個 page 都有多個 key (boundary)，在非 leaf 的 page 中 key 對應到的是 child page 的 reference (pointer)，而 leaf page 則會對應其 value。因此尋找某個 key 的流程會是：</p>
+<ol>
+<li>從 root page 出發。</li>
+<li>根據 page 中的 Key boundaries 遞迴尋找 child page。</li>
+<li>直到找到 leaf page。</li>
+</ol>
+<p>Read&#x2F;Write 都是以類似的邏輯運行，惟 write 時如果 page 的空間不足，此時會將此 page 分為兩個 half-full pages，並更新 parent page 的 key ranges。</p>
+<p>而每個 page 擁有的 child page reference 數量即為 <em>Branching factor</em>，實務上 4KB 的大小通常為數百。雖然 B-tree 和其他平衡樹的 time complexity 都是 O(log n)，但只要 branching factor 夠大，即使樹的層數不多也能儲存很大量的資料 (A four-level B-tree with 4KB pages and branching factor 500 can store up to 256TB)。</p>
+<p>B-tree 會更新 page file，這和前面介紹的 LSM-trees 等 append-only log-structured 結構非常不同，這會引發以下問題：</p>
+<ul>
+<li>如果操作涉及多個 pages (如 split 需要產生兩個新 pages、更新 parent page)，可能會因為斷電等異常導致只有部分完成，造成 index corruption。解法通常是額外存紀錄改動的 append-only log files (WAL, redo log)，用來做之後的 crash recovery。</li>
+<li>多個 thread 同時 access 需要注意 concurrency control，通常會用 <em>latches</em> (lightweight locks) 來保護。前述 log-structed 的方式由於 merging 是 background task 對 old segments 進行，不會干擾到 incoming queries 操作的 segment。</li>
+</ul>
+<p>由於 B-tree 的廣為使用，因此有很多研究出很多最佳化的方式，例如：</p>
+<ul>
+<li>copy-on-write scheme: Instead of overwiting pages and maintaining a WAL, pages can be stored in multiple different versions, which is also useful for concurrency control.</li>
+<li>Abbreviating the key to increase branching factor.</li>
+<li>Maintain the leaf pages in sequential order to speed up (difficult when the tree grows).</li>
+<li>Additional pointers such as sibling to avoid jumping back to parent pages while scanning.</li>
+<li>Variants as <em>fractal trees</em> borrow some log-structured ideas to reduce disk seeks.</li>
+</ul>
+<h3 id="B-Trees-vs-LSM-Trees"><a href="#B-Trees-vs-LSM-Trees" class="headerlink" title="B-Trees vs LSM-Trees"></a>B-Trees vs LSM-Trees</h3><p>大致介紹完幾種加速 database 的儲存結構，在這個小節詳細比較在前兩個小節介紹的 B-trees 和 LSM-trees。</p>
+<p><strong>LSM-Trees</strong></p>
+<ul>
+<li>Typically are faster for writes and slower for reads (while benchmarks are often inconclusive and sensitive to details of the workload).</li>
+<li>Can sustain higher write throughput beacause of:<ul>
+<li>lower <em>Write-amplification</em> (SSDs concern a lot since their blocks can only be overwritten a limited number of times before wearing out).</li>
+<li>Sequential write (especially important on magnetic hard drives).</li>
+</ul>
+</li>
+<li>Fragmentation can be removed therefore can be compressed better (in B-trees page some space remains unused).</li>
+<li>Lower write amplification and reduced fragmentation allow more read and write requests within the available I&#x2F;O bandwidth.</li>
+<li>Sometimes compaction cannot keep up with the rate of incoming writes</li>
+</ul>
+<p><strong>B-Trees</strong></p>
+<ul>
+<li><p>Generally more mature.</p>
+</li>
+<li><p>Typically are faster for reads and slower for write (while benchmarks are often inconclusive and sensitive to details of the workload).</p>
+</li>
+<li><p>Predictable performance compared with LSM-trees which somtimes affected by compaction process.</p>
+</li>
+<li><p>Each key exists in exactly one place in the index. This aspect make it easier to implement transaction isolation using locks.</p>
+</li>
+</ul>
+<p>總結而言兩者的好壞並不絕對，每個 storage engine use case 也不同，值得實測比較來決定哪種較為適合。</p>
+<h3 id="Other-Indexing-Structures"><a href="#Other-Indexing-Structures" class="headerlink" title="Other Indexing Structures"></a>Other Indexing Structures</h3><p>上述的討論的 key-value indexes 類似平常 table 中的 primary key index，與 secondary indexes 的差別在於每個 key 都是獨特的，後者單純是用來加速查詢。另外還有 clustered index, covering index 這些 index 本身除了 reference 之外還有存 row data 的類型，大概比較起來就是用 data duplication (write overhead) 來換 read 效能。</p>
+<p>至於 multi-column indexes，有較常見但限制較多的 concatenated index，以及靈活度較高的 multi-dimensional indexes，後者常用於多維資料的查詢，通常用類似 R-trees 的資料結構建構。</p>
+<p>後續還有簡介 full-text search, fuzzy indexes 等類型，以及介紹 in-memory database：由於 RAM 日漸便宜，因此越來越多這類型的 database 被開發，其特性如下：</p>
+<ul>
+<li>Some only intended for caching use only (e.g. Memcached).</li>
+<li>Some aims for durability, which can be achieved with special hardware (such as battery-powered RAM), by writing log of changes&#x2F;snapshot to disk, or by replicating the in-memory state to other machines (need to reload data after a restart).</li>
+<li>Better performance:<ul>
+<li>They don’t need to read from disk.</li>
+<li>Avoid the overheads of encoding in-memory data structures in a form that can be written to disk.</li>
+</ul>
+</li>
+<li>Because it keeps all data in memory, its implementation is compara‐ tively simple</li>
+<li><em>anti-caching</em>: support datasets larger than the available memory by evicting individual records rather than entire memory page to disk (similar to what OS do with vm and swap).</li>
+<li><em>non-volatile memory</em> (NVM) technologies is a new area of research.</li>
+</ul>
+<h2 id="Transaction-Processing-or-Analytics"><a href="#Transaction-Processing-or-Analytics" class="headerlink" title="Transaction Processing or Analytics"></a>Transaction Processing or Analytics</h2><p>這個章節後續介紹的 OLTP vs OLAP, data warehouse, ETL, star&#x2F;snowflake&#x2F;multi-dimensional schema 等觀念，與更好支援 OLAP 的 storage solution: column-oriented storage。這些知識對我來說都算蠻新鮮的，不過畢竟平常工作接觸的還是 user-facing 的 OLTP，因此這部分決定就先讀過，未來真的有遇到再來整理筆記，也能順便複習。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Reading-notes/" rel="tag"># Reading notes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2024/10/09/pgpool/" rel="prev" title="PostgreSQL Cluster 功能開發 - Pgpool-II">
+      <i class="fa fa-chevron-left"></i> PostgreSQL Cluster 功能開發 - Pgpool-II
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Data-Structures-That-Power-Your-Database"><span class="nav-number">1.</span> <span class="nav-text">Data Structures That Power Your Database</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Hash-Indexes"><span class="nav-number">1.1.</span> <span class="nav-text">Hash Indexes</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SSTables-and-LSM-Trees"><span class="nav-number">1.2.</span> <span class="nav-text">SSTables and LSM-Trees</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Trees"><span class="nav-number">1.3.</span> <span class="nav-text">B-Trees</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Trees-vs-LSM-Trees"><span class="nav-number">1.4.</span> <span class="nav-text">B-Trees vs LSM-Trees</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Other-Indexing-Structures"><span class="nav-number">1.5.</span> <span class="nav-text">Other Indexing Structures</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Transaction-Processing-or-Analytics"><span class="nav-number">2.</span> <span class="nav-text">Transaction Processing or Analytics</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="Tomu Lee"
+      src="/images/avatar.png">
+  <p class="site-author-name" itemprop="name">Tomu Lee</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">9</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">4</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/tomuli423" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;tomuli423" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://www.linkedin.com/in/yu-jung-lee-475457222" title="LinkedIn → https:&#x2F;&#x2F;www.linkedin.com&#x2F;in&#x2F;yu-jung-lee-475457222" rel="noopener" target="_blank"><i class="fab fa-linkedin fa-fw"></i></a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:leetomu423@gmail.com" title="Email → mailto:leetomu423@gmail.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i></a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2024</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Tomu Lee</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+if (document.querySelectorAll('pre.mermaid').length) {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mermaid@8/dist/mermaid.min.js', () => {
+    mermaid.initialize({
+      theme    : '[object Object]',
+      logLevel : 3,
+      flowchart: { curve     : 'linear' },
+      gantt    : { axisFormat: '%m/%d/%Y' },
+      sequence : { actorMargin: 50 }
+    });
+  }, window.mermaid);
+}
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

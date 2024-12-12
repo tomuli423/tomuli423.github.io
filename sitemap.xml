@@ -2,6 +2,15 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://tomuli.cc/2024/12/12/note-ddia-03/</loc>
+    
+    <lastmod>2024-12-12</lastmod>
+    
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>https://tomuli.cc/2024/10/09/pgpool/</loc>
     
     <lastmod>2024-10-09</lastmod>
@@ -103,36 +112,36 @@
 
   <url>
     <loc>https://tomuli.cc/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   
   <url>
-    <loc>https://tomuli.cc/tags/Interview/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <loc>https://tomuli.cc/tags/Reading-notes/</loc>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://tomuli.cc/tags/Reading-notes/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <loc>https://tomuli.cc/tags/Interview/</loc>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/tags/PostgreSQL/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/tags/Mail/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
@@ -140,29 +149,29 @@
 
   
   <url>
-    <loc>https://tomuli.cc/categories/Interview/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <loc>https://tomuli.cc/categories/Reading-notes/</loc>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
-    <loc>https://tomuli.cc/categories/Reading-notes/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <loc>https://tomuli.cc/categories/Interview/</loc>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/categories/PostgreSQL/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
   
   <url>
     <loc>https://tomuli.cc/categories/Mail/</loc>
-    <lastmod>2024-10-09</lastmod>
+    <lastmod>2024-12-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>
   </url>
