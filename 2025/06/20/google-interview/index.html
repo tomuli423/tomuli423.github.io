@@ -28,7 +28,7 @@
 <meta property="og:description" content="大約從一兩年前開始，漸漸覺得現職工作內容帶來的技術成長趨於平緩，也想說要避免過得太安逸腳麻，於是我從去年（2024）下半年開始認真準備面試（所以 blog 文章的產能非常堪憂…），並且慢慢投了一些職缺，然後在去年底請 Googler 的朋友幫忙內推。在這段時間閱讀了很多前人分享的心得文章，雖然面試流程整體看起來接近，但細節上也有些差異，因此在這篇文章中整理了一下自己這次的經驗，記錄的同時也希望能讓">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2025-06-20T15:10:15.000Z">
-<meta property="article:modified_time" content="2025-06-20T15:26:18.278Z">
+<meta property="article:modified_time" content="2025-06-21T13:19:26.082Z">
 <meta property="article:author" content="Tomu Lee">
 <meta property="article:tag" content="Interview">
 <meta name="twitter:card" content="summary">
@@ -188,10 +188,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">Posted on</span>
-              
 
-              <time title="Created: 2025-06-20 23:10:15 / Modified: 23:26:18" itemprop="dateCreated datePublished" datetime="2025-06-20T23:10:15+08:00">2025-06-20</time>
+              <time title="Created: 2025-06-20 23:10:15" itemprop="dateCreated datePublished" datetime="2025-06-20T23:10:15+08:00">2025-06-20</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2025-06-21 21:19:26" itemprop="dateModified" datetime="2025-06-21T21:19:26+08:00">2025-06-21</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -218,7 +224,7 @@
 
 <h2 id="Background"><a href="#Background" class="headerlink" title="Background"></a>Background</h2><ul>
 <li>112 機械學碩，大五去日本交換留學一年。</li>
-<li>開始投遞時約三年的工作經驗，主要是 web application 的前後端開發，另外也負責研究 scale-out database cluster 的 solution，整體來說除了比較 general 的技能之外，和 Google Careers 上大部分台灣 SWE 職缺做的事情都不太相關。</li>
+<li>開始投遞時約三年的工作經驗，主要是 web application 的前後端開發，另外也負責研究 scale-out database cluster solution，整體來說除了比較通用的技能之外，和 Google Careers 上大部分台灣 SWE 職缺的技能需求都不太相關。</li>
 <li>寫此文的當下 Leetcode 題數是 690，約 2 : 7 : 1，其中四五百題是在開始準備前就斷斷續續寫的。</li>
 </ul>
 <h2 id="Interview-Timeline"><a href="#Interview-Timeline" class="headerlink" title="Interview Timeline"></a>Interview Timeline</h2><p>（以下 W 為週）</p>
@@ -230,8 +236,8 @@
 <li>W + 21: 通知 recruiter 可以約 phone interview 了。</li>
 <li>W + 23: Technical phone interview，面試官沒有出現，reschedule phone interview。</li>
 <li>W + 25: Technical phone interview，兩天後告知結果為 lean hire，不過需要有 hiring manager 同意才能繼續進行面試。</li>
-<li>W + 27: 詢問 recruiter 近況後，她告知可以安排 virtual onsite interview 了，並請她協助安排 mock interview。</li>
-<li>W + 28 ~ W + 29: 陸續進行 mock interview 與四關 virtual onsite interview，最後一關結束當天下午馬上來電通知結果，其中 technical rounds 為 2 hire, 1 lean hire，behavioral round 是 strong hire，並且請我後續幾天提供一些相關資訊，協助她準備要送去 hiring committee 的 package。</li>
+<li>W + 27: 寄信詢問 recruiter 近況後，她告知可以安排 virtual onsite interview 了，同時也請她協助安排 mock interview。</li>
+<li>W + 28 ~ W + 29: 陸續進行 mock interview 與四關 virtual onsite interview，最後一關結束當天下午來電通知結果，其中 technical rounds 為 2 hire, 1 lean hire，behavioral round 是 strong hire，分享完 feedback 後她請我後續幾天提供一些資料，協助她準備要送去 hiring committee 的 package。</li>
 <li>W + 30: 通知還是需要 team match，並於隔兩天進行 fit talk。</li>
 <li>W + 31: 通知 HC pass 以及 L4 offer get，來回了兩天討論 total compensation 後收到 official offer letter。</li>
 </ul>
@@ -243,15 +249,15 @@
 <h3 id="Virtual-Onsite-Interview"><a href="#Virtual-Onsite-Interview" class="headerlink" title="Virtual Onsite Interview"></a>Virtual Onsite Interview</h3><p>這一階段總共四關，包含 3 round techincal interview, 1 round behavioral interview，需要有至少兩關以英文進行，recruiter 有提到會幫我排兩關英文的 technical interview，behavioral interview 原則上會由上一個階段中，同意讓我繼續進行面試的 hiring manager 來擔任面試官，不過不保證一定用中文。</p>
 <p>在約時間的時候，需要提供給 recruitment coordinator 多個 time slot，由於想避免請太多假，所以提供的時間多為早上去公司前的時間，較為零碎，因此這四關直接分成四天進行，如果想節省時間的話或許可以考慮多提供完整一點的時段。</p>
 <p>另外這一階段我們可以請 recruiter 協助安排 mock interview，這將會是整個面試流程中，唯一可以從面試官口中直接得到 feedback 的時候了（其他 round 都是透過 recruiter 轉達），因此非常建議和 recruiter 申請。</p>
-<h2 id="Reflections"><a href="#Reflections" class="headerlink" title="Reflections"></a>Reflections</h2><p>最大的心得就是整個流程好長，從 HR phone screen 開始算花了近四個月的時間，其中包含面試官沒有出現導致 phone inteview reschedule，以及 onsite interview 分成四天進行。我想這樣的長期抗戰，真的會導致持續的心理壓力，有時候甚至還會影響到工作，為了緩解壓力，我自己有嘗試一些不一定有用的方法，希望能避免過於影響到身心健康與日常生活：</p>
+<h2 id="Reflections"><a href="#Reflections" class="headerlink" title="Reflections"></a>Reflections</h2><p>最大的心得就是整個流程好長，從 HR phone screen 開始算花了近四個月的時間，其中包含面試官沒有出現導致 phone inteview reschedule，以及 onsite interview 分成四天進行。我想這樣的長期抗戰，真的會導致持續的心理壓力，有時候甚至還會影響到日常生活與工作，為了緩解壓力，我自己有嘗試一些不一定有用的方法，希望能避免過度影響身心健康：</p>
 <ul>
-<li>不要有太多得失心是正論，但作為當事人可能並不容易做到，或許可以專心做到比較小的目標，例如面試完畢就告訴自己不要再去想已經完成的回合，專心迎接接下來的其他關。</li>
-<li>題目是刷不完的，面試前幾天與其狂刷，不如每天寫個一兩題維持手感就好了，其他時間好好休息也好。</li>
+<li>不要有太多得失心是正論，但作為當事人可能並不容易做到，或許可以嘗試更具體的目標，例如面試完就告訴自己不要再去想已經完成的回合，專心迎接接下來的其他關。</li>
+<li>題目是刷不完的，面試前幾天與其狂刷，不如每天寫個一兩題維持手感就好了，其他時間休息放鬆也好。</li>
 <li>面試結束後可以積極和 recruiter 更新，或許能較快得知結果，另外在等待的階段時也可以定期和 recruiter 詢問狀況，以我的經驗來看有兩次都是我去詢問後，recruiter 就馬上通知可以安排下一個階段，因此我認為一定的積極性或許能減少整個流程的耗時。</li>
 <li>準備面試之餘，像是定期運動、找非同事的朋友聊面試（或抱怨 XD）面試，這些雖然基本但還是很有用的。</li>
 </ul>
-<p>至於面試的準備，我想無非就是系統性的刷題，練習英文口說（不用很流暢，開口時不緊張就可以了）以及找朋友幫忙做 mock interview 等等，這邊就不特別贅述了，如果想要了解我的準備方式，或對這篇文章中沒有提及的內容（像是每 round interview 的細節）有興趣的話，歡迎聯繫我詢問。</p>
-<p>由於接下來馬上就要 onboard 了，可以想像要適應新的工作內容應該會有一段陣痛期，接下來 blog 可能還是要繼續停更一段時間…，之後等工作較熟悉後再繼續來分享工作內容或有興趣的的主題。</p>
+<p>至於面試的準備，我想無非就是系統、主題式的刷題，練習英文口說（不用很流暢，開口說不會緊張就可以了）等等，這邊就不特別贅述了，如果想要了解我的準備方式，或對這篇文章中沒有提及的內容（像是每 round interview 的細節）有興趣的話，歡迎聯繫我詢問。</p>
+<p>由於馬上就要 onboard 了，可以預期適應上應該會有一段陣痛期，接下來 blog 可能還是要繼續停更一段時間…，之後等工作較熟悉後再繼續來分享新工作的內容或其他有興趣的的主題。</p>
 
     </div>
 
